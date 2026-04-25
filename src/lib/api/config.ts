@@ -1,10 +1,8 @@
 // API Configuration
 // Change this to your actual backend URL
-<<<<<<< HEAD
+
 export const API_BASE_URL = "https://bluevult.com/api/admin-api.php";
-=======
-export const API_BASE_URL = "http://localhost:80";
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
 
 // API request helper with error handling
 export async function apiRequest<T>(

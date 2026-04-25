@@ -11,7 +11,6 @@ interface UserWithBalance {
   user_balance?: number;
 }
 
-<<<<<<< HEAD
 interface Adjustment {
   id: number;
   user: string;
@@ -21,22 +20,16 @@ interface Adjustment {
   admin: string;
   date: string;
 }
-=======
-const recentAdjustments = [
-  { id: 1, user: "john@example.com", type: "add", amount: "+$500 USD", reason: "Compensation for service issue", admin: "super_admin", date: "2026-01-25" },
-  { id: 2, user: "alice@example.com", type: "subtract", amount: "-0.1 BTC", reason: "Fraud investigation recovery", admin: "super_admin", date: "2026-01-24" },
-  { id: 3, user: "carol@example.com", type: "add", amount: "+1000 USDT", reason: "Referral bonus", admin: "admin1", date: "2026-01-23" },
-];
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
 
 const BalanceAdjustment: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithBalance | null>(null);
   const [adjustmentType, setAdjustmentType] = useState<"credit" | "debit">("credit");
   const [currency, setCurrency] = useState("USD");
   const [amount, setAmount] = useState("");
+  const [growthAmount, setGrowthAmount] = useState("");
   const [reason, setReason] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,11 +43,9 @@ const BalanceAdjustment: React.FC = () => {
         body: JSON.stringify({ q: "fetch_users" }),
       });
       const data = await res.json();
-      if (data.success) setUsers(data.data);
-      else alert("Error fetching users: " + data.message);
+      if (data.success) setUsersList(data.data);
     } catch (err) {
       console.error("Fetch users error:", err);
-      alert("Failed to fetch users");
     }
   };
 
@@ -78,125 +69,59 @@ const BalanceAdjustment: React.FC = () => {
     fetchAdjustments();
   }, []);
 
-<<<<<<< HEAD
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase()) ||
-      user.id.toLowerCase().includes(search.toLowerCase())
-=======
   const { data: users, isLoading, error } = useUsers();
-  const updateBalance = useUpdateUserBalance();
 
   const filteredUsers = (users || []).filter((user) =>
     user.user_name.toLowerCase().includes(search.toLowerCase()) ||
     user.user_email.toLowerCase().includes(search.toLowerCase()) ||
     user.user_id.toString().includes(search)
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
   );
 
   const handleSubmit = () => {
-    if (!selectedUser || !amount || !reason) {
+    if (!selectedUser || (!amount && !growthAmount) || !reason) {
       alert("Please fill in all fields");
       return;
     }
     setConfirmOpen(true);
   };
 
-<<<<<<< HEAD
   const handleConfirm = async () => {
-  if (!selectedUser) return;
-  setLoading(true);
+    if (!selectedUser) return;
+    setLoading(true);
 
-  try {
-    // 🔹 Submit adjustment
-    const res = await fetch("https://bluevult.com/api/admin-api.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        q: "adjust_balance",
-        user_id: selectedUser.id,
-        type: adjustmentType,
-        currency,
-        amount,
-        reason,
-      }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      alert("Balance adjustment submitted successfully!");
-
-      // 🔹 Send email notification to user
-      const emailSubject =
-        adjustmentType === "add"
-          ? `Deposit Received: ${amount} ${currency}`
-          : `Withdrawal / Deduction: ${amount} ${currency}`;
-
-      const emailMessage =
-        adjustmentType === "add"
-          ? `Hello ${selectedUser.name},<br><br>We have added ${amount} ${currency} to your BlueVult account as per our recent adjustment.<br><br>Reason: ${reason}<br><br>Thank you for using BlueVult.`
-          : `Hello ${selectedUser.name},<br><br>${amount} ${currency} has been deducted from your BlueVult account as per our recent adjustment.<br><br>Reason: ${reason}<br><br>Please contact support if you have any questions.`;
-
-      fetch("https://bluevult.com/api/mail.php", {
+    try {
+      const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          subject: emailSubject,
-          name: selectedUser.name,
-          email: selectedUser.email,
-          message: emailMessage,
+          q: "adjust_balance",
+          user_id: selectedUser.user_id,
+          type: adjustmentType === 'credit' ? 'add' : 'subtract',
+          currency,
+          amount: amount || 0,
+          growth_amount: growthAmount || 0,
+          reason,
         }),
-      })
-        .then((res) => res.json())
-        .then(console.log)
-        .catch(console.error);
+      });
 
-      // 🔹 Reset form
-      setSelectedUser(null);
-      setAmount("");
-      setReason("");
-      setConfirmOpen(false);
-      fetchAdjustments();
-      fetchUsers();
-    } else {
-      alert("Error: " + data.message);
-    }
-  } catch (err) {
-    console.error("API error:", err);
-    alert("An unexpected error occurred while submitting adjustment.");
-  }
-
-  setLoading(false);
-};
-
-
-  const getBadgeColor = (value: number) => {
-    if (value > 0) return "bg-green-600/20 text-green-400";
-    if (value < 0) return "bg-red-600/20 text-red-400";
-    return "bg-gray-600/20 text-gray-400";
-=======
-  const handleConfirm = () => {
-    if (!selectedUser) return;
-    
-    updateBalance.mutate({
-      userId: selectedUser.user_id,
-      amount: parseFloat(amount),
-      type: adjustmentType,
-      reason,
-    }, {
-      onSuccess: () => {
+      const data = await res.json();
+      if (data.success) {
         alert("Balance adjustment submitted successfully!");
         setConfirmOpen(false);
         setSelectedUser(null);
         setAmount("");
+        setGrowthAmount("");
         setReason("");
-      },
-      onError: () => {
-        alert("Failed to adjust balance. Please try again.");
+        fetchAdjustments();
+      } else {
+        alert("Error: " + data.message);
       }
-    });
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+    } catch (err) {
+      console.error("API error:", err);
+      alert("An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (error) {
@@ -243,27 +168,6 @@ const BalanceAdjustment: React.FC = () => {
               />
             </div>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-<<<<<<< HEAD
-              {filteredUsers.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => setSelectedUser(user)}
-                  className={`w-full p-4 rounded-lg text-left transition ${
-                    selectedUser?.id === user.id
-                      ? "bg-red-600/20 border border-red-500"
-                      : "bg-[#0f111b] hover:bg-gray-800 border border-transparent"
-                  }`}
-                >
-                  <p className="text-white font-medium">{user.name}</p>
-                  <p className="text-gray-400 text-sm">{user.email}</p>
-                  <div className="grid grid-cols-2 text-sm mt-1 gap-2">
-                    <span className={`px-2 py-1 rounded ${getBadgeColor(user.btcBalance)}`}>USD BALANCE: {user.balance}</span>
-                     <span className={`px-2 py-1 rounded ${getBadgeColor(user.btcBalance)}`}>User Status: {user.status}</span>
-                   
-                       </div>
-                </button>
-              ))}
-=======
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-20 w-full" />
@@ -287,7 +191,6 @@ const BalanceAdjustment: React.FC = () => {
                   </button>
                 ))
               )}
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
             </div>
           </div>
 
@@ -296,15 +199,12 @@ const BalanceAdjustment: React.FC = () => {
             <h3 className="text-lg font-semibold text-white mb-4">Adjustment Details</h3>
             {selectedUser ? (
               <div className="space-y-4">
-<<<<<<< HEAD
-=======
                 {/* Selected User Info */}
                 <div className="bg-[#0f111b] rounded-lg p-4">
                   <p className="text-white font-medium">{selectedUser.user_name}</p>
                   <p className="text-gray-400 text-sm">{selectedUser.user_email}</p>
                   <p className="text-gray-500 text-xs">User ID: {selectedUser.user_id}</p>
                 </div>
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
 
                 {/* Adjustment Type */}
                 <div>
@@ -342,20 +242,31 @@ const BalanceAdjustment: React.FC = () => {
                     className="w-full px-4 py-3 bg-[#0f111b] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
                     <option value="USD">USD</option>
-                   
                   </select>
                 </div>
 
                 {/* Amount */}
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Amount</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder={`Enter amount in ${currency}`}
-                    className="w-full px-4 py-3 bg-[#0f111b] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Balance Amount</label>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-[#0f111b] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Portfolio Growth</label>
+                    <input
+                      type="number"
+                      value={growthAmount}
+                      onChange={(e) => setGrowthAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-[#0f111b] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
                 </div>
 
                 {/* Reason */}
@@ -373,19 +284,14 @@ const BalanceAdjustment: React.FC = () => {
                 {/* Submit */}
                 <button
                   onClick={handleSubmit}
-                  disabled={!amount || !reason}
+                  disabled={loading || ((!amount && !growthAmount) || !reason)}
                   className={`w-full py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${
                     adjustmentType === "credit"
                       ? "bg-green-600 hover:bg-green-700 text-white"
                       : "bg-red-600 hover:bg-red-700 text-white"
                   }`}
-                  disabled={loading}
                 >
-<<<<<<< HEAD
-                  {loading ? "Submitting..." : `${adjustmentType === "add" ? "Add" : "Subtract"} ${amount} ${currency}`}
-=======
-                  {adjustmentType === "credit" ? "Add" : "Subtract"} {amount} {currency}
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+                  {loading ? "Submitting..." : `${adjustmentType === "credit" ? "Add" : "Subtract"} Funds/Growth`}
                 </button>
               </div>
             ) : (
@@ -460,17 +366,12 @@ const BalanceAdjustment: React.FC = () => {
                 </button>
                 <button
                   onClick={handleConfirm}
-                  disabled={updateBalance.isPending}
+                  disabled={loading}
                   className={`flex-1 py-3 rounded-lg text-white transition disabled:opacity-50 ${
                     adjustmentType === "credit" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
                   }`}
-                  disabled={loading}
                 >
-<<<<<<< HEAD
-                  {loading ? "Submitting..." : "Confirm"}
-=======
-                  {updateBalance.isPending ? "Processing..." : "Confirm"}
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+                  {loading ? "Processing..." : "Confirm"}
                 </button>
               </div>
             </div>

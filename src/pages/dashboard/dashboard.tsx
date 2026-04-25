@@ -2,8 +2,9 @@ import { useState, useEffect, ReactNode } from "react";
 import Sidebar from "./dashboardWidgets/Sidebar";
 import TradingViewWidget from "./dashboardWidgets/bitcoinChart";
 import Footer from "@/components/landing/Footer";
+import CryptoAsset from "@/components/dashboard/CryptoAsset";
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import {
   FaBell,
@@ -78,7 +79,8 @@ const actions = [
 // Main Dashboard Component
 // ------------------------
 const Dashboard: React.FC = () => {
-  const [dark, setDark] = useState(false);
+  const navigate = useNavigate();
+  const [dark, setDark] = useState(localStorage.getItem("theme") === "dark");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userName, setUserName] = useState(localStorage.getItem("user_name") || "");
   const [uid] = useState(localStorage.getItem("user_id") || "");
@@ -87,6 +89,10 @@ const Dashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [cryptoData, setCryptoData] = useState<any[]>([]);
+  const [selectedSymbol, setSelectedSymbol] = useState("BINANCE:BTCUSDT");
 
   // ------------------------
   // Fetch dashboard data
@@ -116,7 +122,50 @@ const Dashboard: React.FC = () => {
       }
     };
 
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("https://bluevult.com/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "get_notifications", uid }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setNotifications(data.notifications);
+        }
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
+    };
+
+    const fetchCryptoData = async () => {
+        try {
+            const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin,cardano,ripple,dogecoin&order=market_cap_desc&per_page=7&page=1&sparkline=true");
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setCryptoData(data.map(coin => ({
+                    name: coin.name,
+                    symbol: coin.symbol,
+                    price: coin.current_price.toLocaleString(),
+                    change: coin.price_change_percentage_24h.toFixed(2),
+                    isUp: coin.price_change_percentage_24h > 0,
+                    icon: coin.image,
+                    color: coin.symbol === 'btc' ? '#F7931A' : coin.symbol === 'eth' ? '#627EEA' : '#14F195',
+                    data: coin.sparkline_in_7d.price.slice(-20).map((p: number) => ({ value: p })),
+                    tvSymbol: `BINANCE:${coin.symbol.toUpperCase()}USDT`
+                })));
+            }
+        } catch (err) {
+            console.error("Error fetching crypto data:", err);
+        }
+    }
+
     fetchDashboard();
+    fetchNotifications();
+    fetchCryptoData();
+
+    const interval = setInterval(fetchCryptoData, 30000);
+    return () => clearInterval(interval);
   }, [uid]);
 
   // ------------------------
@@ -134,55 +183,105 @@ const Dashboard: React.FC = () => {
     purple: "bg-purple-500/20",
     indigo: "bg-indigo-500/20",
   };
-  const icons = {
+  const icons: Record<string, ReactNode> = {
     BTC: <FaBitcoin />,
     USD: <FaDollarSign />,
     Growth: <FaChartLine />,
     Assets: <FaWallet />,
   };
 
+  const toggleDark = () => {
+    const newDark = !dark;
+    setDark(newDark);
+    document.documentElement.classList.toggle("dark", newDark);
+    localStorage.setItem("theme", newDark ? "dark" : "light");
+  };
+
+  const markNotificationsSeen = async () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications && notifications.some(n => n.is_notified === 0)) {
+       await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: "mark_notifications_seen", uid }),
+      });
+    }
+  };
+
+  const unreadCount = notifications.filter(n => n.notification_status === 'unread').length;
+
   return (
     <div className={dark ? "dark" : ""}>
-      <div className="flex min-h-screen bg-gray-100 dark:bg-[#0f111b] text-gray-900 dark:text-gray-100 transition">
+      <div className="flex min-h-screen bg-gray-50 dark:bg-[#020617] text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
         {/* Mobile overlay */}
         {sidebarOpen && <div className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-[#0a0f1f] shadow-lg transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-[#0a0f1f] shadow-xl transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <Sidebar />
         </div>
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col lg:ml-64">
+        <div className="flex-1 flex flex-col lg:ml-64 pb-24 lg:pb-0">
 
           {/* Topbar */}
-          <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-[#0f111b] border-b border-gray-700 px-6 flex items-center justify-between z-50">
+          <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-white dark:bg-[#020617]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between z-50">
             <div className="flex items-center gap-4">
-              <button className="lg:hidden p-2 rounded-md text-white hover:bg-white/10" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                <FaBars className="text-xl text-white" />
+              <button className="lg:hidden p-2 rounded-md text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10" onClick={() => setSidebarOpen(!sidebarOpen)}>
+                <FaBars className="text-xl" />
               </button>
-              <h1 className="text-lg font-bold text-white"> Dashboard</h1>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">Dashboard</h1>
             </div>
-            <div className="flex items-center gap-5">
-              <button onClick={() => setDark(!dark)} className="p-2 rounded-lg hover:bg-gray-800 transition">
-                {dark ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-400" />}
+            <div className="flex items-center gap-3">
+              <button onClick={toggleDark} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:scale-110 transition active:scale-95">
+                {dark ? <FaSun /> : <FaMoon />}
               </button>
-              <button className="relative p-2 rounded-lg hover:bg-gray-800 transition">
-                <FaBell className="text-white" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+              <div className="relative">
+                <button onClick={markNotificationsSeen} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-white hover:scale-110 transition active:scale-95">
+                  <FaBell />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white dark:border-[#020617] animate-bounce">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#0f111b] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in slide-in-from-top-5">
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                      <h3 className="font-bold">Notifications</h3>
+                      <span className="text-xs text-blue-600 cursor-pointer">Clear all</span>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="p-8 text-center text-gray-500 text-sm">No new notifications</p>
+                      ) : (
+                        notifications.map((n, i) => (
+                          <div key={i} className="p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer">
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{n.notification}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{n.notification_desc}</p>
+                            <span className="text-[10px] text-gray-400 mt-2 block">{n.notification_time}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button onClick={() => navigate('/settings')} className="hover:scale-110 transition active:scale-95">
+                <FaUserCircle className="text-3xl text-blue-600" />
               </button>
-              <FaUserCircle className="text-3xl opacity-80 text-white" />
             </div>
           </div>
 
           {/* Main dashboard content */}
           <div className="p-6 space-y-6 mt-16">
-            <h2><b>Welcome Back: </b> {userName || "Loading..."}</h2>
+            <h2 className="text-xl font-bold"><b>Welcome Back: </b> {userName || "Loading..."}</h2>
 
             {/* Wallet + Portfolio Stats */}
             <div className="lg:hidden">
-              <div className="bg-white rounded-2xl shadow-lg p-5">
+              <div className="bg-white dark:bg-[#0a1120] rounded-2xl shadow-lg p-5 border border-gray-100 dark:border-gray-800">
                 <div className="grid grid-cols-2 gap-4">
                   {loadingStats
                     ? Array(4).fill(0).map((_, idx) => (
@@ -223,8 +322,8 @@ const Dashboard: React.FC = () => {
                       label={item.label}
                       value={item.value}
                       trend={item.trend}
-                      gradient={gradients[item.color] || "from-gray-400 to-gray-500"}
-                      bgTrack={bgTracks[item.color] || "bg-gray-200"}
+                      gradient={(gradients as any)[item.color] || "from-gray-400 to-gray-500"}
+                      bgTrack={(bgTracks as any)[item.color] || "bg-gray-200"}
                       progressWidth="w-3/4"
                     />
                   ))}
@@ -233,36 +332,62 @@ const Dashboard: React.FC = () => {
             {/* Action buttons */}
             <div className="flex flex-wrap justify-between gap-3 mt-6">
               {actions.map((action) => (
-           <Link to={action.link}>    <button key={action.label} className={`flex-1 min-w-[100px] max-w-[120px] flex flex-col items-center justify-center p-1 rounded-2xl shadow-2xl text-white font-semibold transition ${action.bg} ${action.hoverBg}`}>
-                  <div className="text-xl mb-1">{action.icon}</div>
-                  <span className="text-sm">{action.label}</span>
-                </button></Link>
+                <Link key={action.label} to={action.link} className="flex-1">
+                  <button className={`w-full flex flex-col items-center justify-center py-4 rounded-2xl shadow-lg text-white font-bold transition transform hover:scale-105 active:scale-95 ${action.bg} ${action.hoverBg} border border-white/10`}>
+                    <div className="text-2xl mb-2">{action.icon}</div>
+                    <span className="text-xs uppercase tracking-wider">{action.label}</span>
+                  </button>
+                </Link>
               ))}
             </div>
 
-            {/* Charts */}
-            <div className="grid lg:grid-cols-3 gap-6">
-              <TradingViewWidget />
-              <div className="hidden md:block">
-                <ChartCard title="Portfolio Allocation">
-                  <div className="flex flex-col items-center space-y-4">
-                    <ResponsiveContainer width="100%" height={160}>
-                      <PieChart>
-                        <Pie data={portfolioData} dataKey="value" nameKey="name" outerRadius={70} innerRadius={40}>
-                          {portfolioData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="w-full space-y-2">
-                      {portfolioData.map((asset, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                          <p className="text-sm font-medium text-gray-300">{asset.name} ({asset.value}%)</p>
-                        </div>
-                      ))}
+            {/* Main Section */}
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Asset List (Trust Wallet Style) */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Assets</h2>
+                  <span className="text-sm text-blue-600 font-medium cursor-pointer hover:underline">See all</span>
+                </div>
+                <div className="grid gap-3">
+                  {cryptoData.length === 0 ? (
+                    Array(7).fill(0).map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-2xl" />
+                    ))
+                  ) : (
+                    cryptoData.map((asset) => (
+                      <div key={asset.symbol} onClick={() => setSelectedSymbol(asset.tvSymbol)}>
+                        <CryptoAsset {...asset} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Chart & Allocation */}
+              <div className="space-y-8">
+                <TradingViewWidget symbol={selectedSymbol} />
+                <div className="hidden lg:block">
+                  <ChartCard title="Portfolio Allocation">
+                    <div className="flex flex-col items-center space-y-4">
+                      <ResponsiveContainer width="100%" height={160}>
+                        <PieChart>
+                          <Pie data={portfolioData} dataKey="value" nameKey="name" outerRadius={70} innerRadius={40}>
+                            {portfolioData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="w-full space-y-2">
+                        {portfolioData.map((asset, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                            <p className="text-sm font-medium text-gray-300">{asset.name} ({asset.value}%)</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </ChartCard>
+                  </ChartCard>
+                </div>
               </div>
             </div>
 
@@ -326,7 +451,7 @@ const Dashboard: React.FC = () => {
 // Stat Card Component
 // ------------------------
 const StatCard: React.FC<StatCardProps> = ({ icon, label, value, trend, gradient, bgTrack, progressWidth }) => (
-  <div className="bg-[#0f111b] rounded-2xl shadow-xl p-5 flex flex-col justify-between transition hover:shadow-2xl">
+  <div className="bg-[#0f111b] rounded-2xl shadow-xl p-5 flex flex-col justify-between transition hover:shadow-2xl border border-white/5">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className={`p-3 rounded-full bg-gradient-to-br ${gradient} text-white text-2xl flex items-center justify-center`}>{icon}</div>
@@ -347,7 +472,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon, label, value, trend, gradient
 // Chart Card Component
 // ------------------------
 const ChartCard: React.FC<ChartCardProps> = ({ title, children, className }) => (
-  <div className={`bg-[#0f111b] rounded-2xl p-4 shadow-xl ${className}`}>
+  <div className={`bg-[#0f111b] rounded-2xl p-4 shadow-xl border border-white/5 ${className}`}>
     <h2 className="text-white font-medium mb-3">{title}</h2>
     {children}
   </div>

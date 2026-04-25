@@ -21,10 +21,9 @@ import {
   fetchPlatformWallets,
   fetchWalletMovements,
   fetchWalletBalanceHistory,
-<<<<<<< HEAD
+
   fetchApprovedDeposits,
-=======
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
   User,
   UserBalance,
   UserKYC,
@@ -80,7 +79,7 @@ export function useWithdrawals() {
   });
 }
 
-<<<<<<< HEAD
+
 export function useRevenue() {
   return useQuery({
     queryKey: ["admin", "revenue"],
@@ -89,8 +88,7 @@ export function useRevenue() {
   });
 }
 
-=======
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
 export function useConnectedWallets() {
   return useQuery<ConnectedWallet[], Error>({
     queryKey: ["admin", "wallets"],

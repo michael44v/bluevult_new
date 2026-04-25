@@ -176,6 +176,15 @@ $stmt->close();
 
                 while($read=$result->fetch_assoc()) {
                     $user_id = $read['user_id'];
+
+                    // Notification for login
+                    $notif_title = "New Login Detected";
+                    $notif_desc = "Your account was logged into on " . date('Y-m-d H:i:s');
+                    $stmt_notif = $conn->prepare("INSERT INTO user_notifications (user_id, notification, notification_desc, notification_status) VALUES (?, ?, ?, 'unread')");
+                    $stmt_notif->bind_param("iss", $user_id, $notif_title, $notif_desc);
+                    $stmt_notif->execute();
+                    $stmt_notif->close();
+
                     //check if user is suspended
                     if($read['user_status'] == 'suspended') {
                             echo json_encode(['success' => false, 'message' => 'User Account has been suspended, please Email admin for assistance. info@bluevult.com ','user_id' => $user_id]);
@@ -384,6 +393,14 @@ $stmt->close();
 
 
             if ($stmt->execute()) {
+                // Notification for deposit
+                $notif_title = "Deposit Request Received";
+                $notif_desc = "Your deposit request for $" . number_format($amount, 2) . " ($btc_equiv $crypto) has been received and is pending approval.";
+                $stmt_notif = $conn->prepare("INSERT INTO user_notifications (user_id, notification, notification_desc, notification_status) VALUES (?, ?, ?, 'unread')");
+                $stmt_notif->bind_param("iss", $uid, $notif_title, $notif_desc);
+                $stmt_notif->execute();
+                $stmt_notif->close();
+
             echo json_encode([
             'status' => 'success',
             'message' => 'Payment recorded successfully'
@@ -495,6 +512,13 @@ $stmt->close();
                     $stmt2->bind_param("isids", $uid, $crypto,$amountUSD, $amount, $address);
                     $stmt2->execute();
 
+                    // Notification for withdrawal
+                    $notif_title = "Withdrawal Request Received";
+                    $notif_desc = "Your withdrawal request for $" . number_format($amountUSD, 2) . " ($amount $crypto) has been received and is pending approval.";
+                    $stmt_notif = $conn->prepare("INSERT INTO user_notifications (user_id, notification, notification_desc, notification_status) VALUES (?, ?, ?, 'unread')");
+                    $stmt_notif->bind_param("iss", $uid, $notif_title, $notif_desc);
+                    $stmt_notif->execute();
+                    $stmt_notif->close();
 
                     $conn->commit();
                     echo json_encode(['status' => 'success', 'message' => 'Withdrawal recorded successfully']);
@@ -582,6 +606,41 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
                 }
                 $stmt->close();
         break;
+
+        case "get_notifications":
+            $uid = intval($input['uid'] ?? 0);
+            if (!$uid) {
+                echo json_encode(['success' => false, 'notifications' => []]);
+                break;
+            }
+
+            $stmt = $conn->prepare("
+                SELECT id, notification, notification_desc, notification_status, notification_time
+                FROM user_notifications
+                WHERE user_id = ?
+                ORDER BY notification_time DESC
+                LIMIT 50
+            ");
+            $stmt->bind_param("i", $uid);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $notifications = [];
+            while ($row = $result->fetch_assoc()) {
+                $notifications[] = $row;
+            }
+            $stmt->close();
+
+            echo json_encode(['success' => true, 'notifications' => $notifications]);
+            break;
+
+        case "mark_notifications_seen":
+            $uid = intval($input['uid'] ?? 0);
+            if ($uid) {
+                $conn->query("UPDATE user_notifications SET is_notified = 1 WHERE user_id = $uid");
+                echo json_encode(['success' => true]);
+            }
+            break;
 
         case "settings":
     // Get the JSON input
