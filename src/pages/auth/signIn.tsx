@@ -1,0 +1,212 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const SignIn = () => {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [captchaStatus, setCaptchaStatus] = useState(false);
+
+  // Handle input change
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Captcha success
+  const onCaptchaSuccess = (token: string | null) => {
+    if (token) {
+      setCaptchaStatus(true);
+      setError("");
+    } else {
+      setCaptchaStatus(false);
+    }
+  };
+
+  // Submit handler
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setError("");
+    setMessage("");
+
+    if (!captchaStatus) {
+      setError("Please complete the captcha");
+      return;
+    }
+
+    try {
+      const response = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          q: "signin",
+          email: form.email,
+          password: form.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      // ❌ LOGIN FAILED
+      if (!data.success) {
+        setError(data.message || "Invalid email or password");
+        return;
+      }
+
+      // ✅ LOGIN SUCCESS
+      setMessage("Login successful");
+      localStorage.setItem("user_id", data.user_id);
+
+      document.body.style.transition = "opacity 0.5s";
+      document.body.style.opacity = "0.8";
+
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 800);
+
+    } catch (err) {
+      console.error(err);
+      setError("Network error. Please try again.");
+    }
+  };
+
+  return (
+    <section className="min-h-screen bg-slate-900 flex items-center justify-center px-6">
+      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-12 items-center">
+
+        {/* LEFT */}
+        <div className="hidden md:block">
+          <h1 className="text-4xl font-extrabold text-white leading-tight">
+            Welcome back to <br />
+            <span className="text-emerald-400">BlueVult</span>
+          </h1>
+
+          <p className="mt-6 text-slate-300 max-w-md">
+            Sign in to manage your investments, track performance,
+            and grow your crypto portfolio securely.
+          </p>
+        </div>
+
+        {/* RIGHT */}
+        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-8 md:p-10 shadow-xl">
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Sign In
+          </h2>
+
+          {/* ERROR */}
+          {error && (
+            <p className="mb-4 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-4 py-2 rounded-md text-sm">
+              {error}
+            </p>
+          )}
+
+          {/* SUCCESS */}
+          {message && (
+            <p className="mb-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded-md text-sm">
+              {message}
+            </p>
+          )}
+
+          <p className="text-slate-400 mb-8">
+            Enter your credentials to continue
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* EMAIL */}
+            <div>
+              <label className="block text-sm text-slate-300 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+                           text-white placeholder-slate-500 focus:outline-none
+                           focus:ring-2 focus:ring-emerald-500/40"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            {/* PASSWORD */}
+            <div>
+              <label className="block text-sm text-slate-300 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+                           text-white placeholder-slate-500 focus:outline-none
+                           focus:ring-2 focus:ring-emerald-500/40"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <Link
+                to="/forgot-password"
+                className="text-emerald-400 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* CAPTCHA */}
+            <ReCAPTCHA
+              sitekey="6LcHm1csAAAAALk6axVVopXVrm5AWwK2vJuAKCng"
+              onChange={onCaptchaSuccess}
+            />
+
+            {/* SUBMIT */}
+            <button
+              type="submit"
+              disabled={!captchaStatus}
+              className={`w-full font-semibold py-3 rounded-xl transition
+                ${
+                  captchaStatus
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-slate-900"
+                    : "bg-gray-500 cursor-not-allowed text-gray-300"
+                }
+              `}
+            >
+              Sign In
+            </button>
+          </form>
+
+          <p className="mt-8 text-center text-slate-400 text-sm">
+            Don’t have an account?{" "}
+            <Link
+              to="/signUp"
+              className="text-emerald-400 font-semibold hover:underline"
+            >
+              Create one
+            </Link>
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default SignIn;

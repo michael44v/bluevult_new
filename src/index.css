@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+@layer base {
+  :root {
+    /* Blue & Silver Crypto Theme - Light Mode */
+    --background: 210 20% 98%;
+    --foreground: 220 35% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 35% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 35% 12%;
+
+    /* Primary: Deep Crypto Blue */
+    --primary: 220 80% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Silver / Cool Gray */
+    --secondary: 215 18% 90%;
+    --secondary-foreground: 220 35% 18%;
+
+    --muted: 215 18% 94%;
+    --muted-foreground: 215 16% 48%;
+
+    /* Accent: Soft Blue Highlight */
+    --accent: 215 85% 92%;
+    --accent-foreground: 220 80% 35%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 88%;
+    --input: 215 20% 88%;
+    --ring: 220 80% 45%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --chart-up: 145 63% 42%;
+    --chart-down: 0 84% 60%;
+    --gold: 43 74% 49%;
+    --silver: 215 18% 85%;
+
+    /* Sidebar */
+    --sidebar-background: 210 20% 97%;
+    --sidebar-foreground: 220 35% 18%;
+    --sidebar-primary: 220 80% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 85% 95%;
+    --sidebar-accent-foreground: 220 80% 35%;
+    --sidebar-border: 215 20% 90%;
+    --sidebar-ring: 220 80% 45%;
+  }
+
+  .dark {
+    /* Blue & Silver Crypto Theme - Dark Mode */
+    --background: 220 30% 6%;
+    --foreground: 210 25% 95%;
+
+    --card: 220 28% 10%;
+    --card-foreground: 210 25% 95%;
+
+    --popover: 220 28% 10%;
+    --popover-foreground: 210 25% 95%;
+
+    /* Primary: Neon Crypto Blue */
+    --primary: 220 85% 60%;
+    --primary-foreground: 220 30% 6%;
+
+    /* Secondary: Dark Silver */
+    --secondary: 215 15% 22%;
+    --secondary-foreground: 210 25% 90%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 215 15% 60%;
+
+    /* Accent: Blue Glow */
+    --accent: 220 70% 18%;
+    --accent-foreground: 220 85% 75%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 220 85% 60%;
+
+    /* Custom tokens */
+    --success: 145 63% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
+    --chart-up: 145 63% 45%;
+    --chart-down: 0 72% 52%;
+    --gold: 43 74% 55%;
+    --silver: 215 15% 72%;
+
+    /* Sidebar */
+    --sidebar-background: 220 28% 8%;
+    --sidebar-foreground: 210 25% 90%;
+    --sidebar-primary: 220 85% 60%;
+    --sidebar-primary-foreground: 220 30% 6%;
+    --sidebar-accent: 220 70% 15%;
+    --sidebar-accent-foreground: 220 85% 75%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 220 85% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom utility classes for the crypto theme */
+@layer utilities {
+  .glass {
+    @apply bg-white/80 backdrop-blur-lg dark:bg-black/40;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary to-emerald-400;
+  }
+
+  .gradient-dark {
+    @apply bg-gradient-to-br from-background via-card to-muted;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-emerald-400 to-teal-300 bg-clip-text text-transparent;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.5);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 20px -5px hsl(var(--success) / 0.5);
+  }
+}
+.input {
+  @apply w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+  text-white placeholder-slate-500 focus:outline-none
+  focus:ring-2 focus:ring-emerald-500/40;
+}
