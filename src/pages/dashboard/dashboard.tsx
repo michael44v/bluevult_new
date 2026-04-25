@@ -3,6 +3,7 @@ import Sidebar from "./dashboardWidgets/Sidebar";
 import TradingViewWidget from "./dashboardWidgets/bitcoinChart";
 import Footer from "@/components/landing/Footer";
 import CryptoAsset from "@/components/dashboard/CryptoAsset";
+import TopBar from "@/components/dashboard/TopBar";
 
 import { Link, useNavigate } from "react-router-dom";
 
@@ -93,6 +94,8 @@ const Dashboard: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [cryptoData, setCryptoData] = useState<any[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState("BINANCE:BTCUSDT");
+  const [isChartModalOpen, setIsChartModalOpen] = useState(false);
+  const [selectedAssetName, setSelectedAssetName] = useState("");
 
   // ------------------------
   // Fetch dashboard data
@@ -226,54 +229,7 @@ const Dashboard: React.FC = () => {
         <div className="flex-1 flex flex-col lg:ml-64 pb-24 lg:pb-0">
 
           {/* Topbar */}
-          <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-white dark:bg-[#020617]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between z-50">
-            <div className="flex items-center gap-4">
-              <button className="lg:hidden p-2 rounded-md text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                <FaBars className="text-xl" />
-              </button>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={toggleDark} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:scale-110 transition active:scale-95">
-                {dark ? <FaSun /> : <FaMoon />}
-              </button>
-              <div className="relative">
-                <button onClick={markNotificationsSeen} className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-white hover:scale-110 transition active:scale-95">
-                  <FaBell />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white dark:border-[#020617] animate-bounce">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-
-                {showNotifications && (
-                  <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#0f111b] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in slide-in-from-top-5">
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                      <h3 className="font-bold">Notifications</h3>
-                      <span className="text-xs text-blue-600 cursor-pointer">Clear all</span>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <p className="p-8 text-center text-gray-500 text-sm">No new notifications</p>
-                      ) : (
-                        notifications.map((n, i) => (
-                          <div key={i} className="p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer">
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{n.notification}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{n.notification_desc}</p>
-                            <span className="text-[10px] text-gray-400 mt-2 block">{n.notification_time}</span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <button onClick={() => navigate('/settings')} className="hover:scale-110 transition active:scale-95">
-                <FaUserCircle className="text-3xl text-blue-600" />
-              </button>
-            </div>
-          </div>
+          <TopBar title="Dashboard" onSidebarToggle={() => setSidebarOpen(true)} />
 
           {/* Main dashboard content */}
           <div className="p-6 space-y-6 mt-16">
@@ -356,7 +312,11 @@ const Dashboard: React.FC = () => {
                     ))
                   ) : (
                     cryptoData.map((asset) => (
-                      <div key={asset.symbol} onClick={() => setSelectedSymbol(asset.tvSymbol)}>
+                      <div key={asset.symbol} onClick={() => {
+                        setSelectedSymbol(asset.tvSymbol);
+                        setSelectedAssetName(asset.name);
+                        setIsChartModalOpen(true);
+                      }}>
                         <CryptoAsset {...asset} />
                       </div>
                     ))
@@ -364,9 +324,8 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Chart & Allocation */}
+              {/* Allocation & Sidebar Info */}
               <div className="space-y-8">
-                <TradingViewWidget symbol={selectedSymbol} />
                 <div className="hidden lg:block">
                   <ChartCard title="Portfolio Allocation">
                     <div className="flex flex-col items-center space-y-4">
@@ -443,6 +402,29 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Chart Modal */}
+      {isChartModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-5xl bg-white dark:bg-[#0f111b] rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{selectedAssetName} Price Chart</h3>
+                <p className="text-xs text-gray-500">Live data from TradingView</p>
+              </div>
+              <button
+                onClick={() => setIsChartModalOpen(false)}
+                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-red-500 hover:text-white transition-all"
+              >
+                <FaBars className="rotate-45" />
+              </button>
+            </div>
+            <div className="p-2 md:p-6 bg-white dark:bg-[#0f111b]">
+              <TradingViewWidget symbol={selectedSymbol} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

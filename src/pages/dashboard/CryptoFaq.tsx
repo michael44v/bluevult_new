@@ -1,3 +1,4 @@
+import TopBar from '@/components/dashboard/TopBar';
 import { useState } from "react";
 import { FaBars, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Sidebar from "./dashboardWidgets/Sidebar";
@@ -49,17 +50,7 @@ const CryptoFAQ: React.FC = () => {
       {/* Main Content */}
 <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
   {/* Top Bar */}
-  <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-[#0f111b] border-b border-gray-700 px-6 flex items-center justify-between z-50">
-    <div className="flex items-center gap-4">
-      <button
-        className="lg:hidden p-2 rounded-md text-white hover:bg-white/10"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        <FaBars className="text-xl text-white" />
-      </button>
-      <h1 className="text-lg font-bold text-white">Crypto FAQ & Guides</h1>
-    </div>
-  </div>
+  <TopBar title="FAQs" onSidebarToggle={() => setSidebarOpen(true)} />
 
   {/* Page Content */}
   <div className="p-6 space-y-6 mt-16">
