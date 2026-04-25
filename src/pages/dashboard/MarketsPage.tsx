@@ -1,3 +1,4 @@
+import TopBar from '@/components/dashboard/TopBar';
 import { useState, useEffect } from "react";
 import { FaBars, FaMoon, FaSun, FaBell, FaUserCircle, FaChartLine, FaArrowUp, FaArrowDown } from "react-icons/fa";
 import Sidebar from "./dashboardWidgets/Sidebar";
@@ -80,32 +81,7 @@ const MarketsPage: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300 max-w-full">
           {/* Top Bar */}
-          <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-[#0f111b] border-b border-gray-700 px-6 flex items-center justify-between z-50">  <div className="flex items-center gap-4">
-              <button
-                className="lg:hidden p-2 rounded-md text-white hover:bg-white/10"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <FaBars className="text-xl text-white" />
-              </button>
-              <h1 className="text-lg font-bold text-white">Markets & Stocks</h1>
-            </div>
-
-            <div className="flex items-center gap-5">
-              <button
-                onClick={() => setDark(!dark)}
-                className="p-2 rounded-lg hover:bg-gray-800 transition"
-              >
-                {dark ? <FaSun className="text-yellow-400" /> : <FaMoon className="text-gray-400" />}
-              </button>
-
-              <button className="relative p-2 rounded-lg hover:bg-gray-800 transition">
-                <FaBell className="text-white" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-              </button>
-
-              <FaUserCircle className="text-3xl opacity-80 text-white" />
-            </div>
-          </div>
+          <TopBar title="Markets" onSidebarToggle={() => setSidebarOpen(true)} />
 
           {/* Disclaimer Modal */}
           {showDisclaimer && (
