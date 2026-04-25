@@ -2,11 +2,8 @@ import { useState, useEffect } from "react";
 import './admincss.css';
 import AdminLayout from "./components/AdminLayout";
 import { FaSearch, FaEdit, FaBan, FaCheckCircle, FaEye } from "react-icons/fa";
-<<<<<<< HEAD
-=======
-import { useUsers, useUpdateUserStatus } from "@/hooks/useAdminData";
-import { Skeleton } from "@/components/ui/skeleton";
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
+
 
 interface User {
   user_id: number;
@@ -29,7 +26,7 @@ const UsersManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-<<<<<<< HEAD
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -59,18 +56,7 @@ const UsersManagement: React.FC = () => {
       user.id.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-=======
-  const { data: users, isLoading, error } = useUsers();
-  const updateStatus = useUpdateUserStatus();
 
-  const filteredUsers = (users || []).filter((user) => {
-    const matchesSearch = user.user_name.toLowerCase().includes(search.toLowerCase()) ||
-      user.user_email.toLowerCase().includes(search.toLowerCase()) ||
-      user.user_id.toString().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || 
-      (statusFilter === "verified" && user.kyc === "verified") ||
-      (statusFilter === "unverified" && user.kyc === "unverified");
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
     return matchesSearch && matchesStatus;
   });
 
@@ -83,7 +69,7 @@ const UsersManagement: React.FC = () => {
     return styles[status] || "bg-gray-500/20 text-gray-400";
   };
 
-<<<<<<< HEAD
+
   const toggleUserStatus = async (user: User) => {
     const newStatus = user.status === "suspended" ? "active" : "suspended";
     try {
@@ -131,24 +117,7 @@ const UsersManagement: React.FC = () => {
     }
   };
 
-=======
-  const handleToggleStatus = (userId: number, currentStatus: string) => {
-    const newStatus = currentStatus === "active" ? "suspended" : "active";
-    updateStatus.mutate({ userId, status: newStatus });
-  };
 
-  if (error) {
-    return (
-      <AdminLayout title="Users Management">
-        <div className="text-center py-12">
-          <p className="text-red-400">Failed to load users. Please check your API connection.</p>
-          <p className="text-gray-500 text-sm mt-2">Make sure your backend is running at the configured API URL.</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
   return (
     <AdminLayout title="Users Management">
       <div className="space-y-6">
@@ -186,7 +155,7 @@ const UsersManagement: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#1a1d2a] rounded-xl p-4 border border-gray-800">
             <p className="text-gray-400 text-sm">Total Users</p>
-<<<<<<< HEAD
+
             <p className="text-2xl font-bold text-white">{users.length}</p>
           </div>
           <div className="bg-[#1a1d2a] rounded-xl p-4 border border-gray-800">
@@ -200,48 +169,12 @@ const UsersManagement: React.FC = () => {
           <div className="bg-[#1a1d2a] rounded-xl p-4 border border-gray-800">
             <p className="text-gray-400 text-sm">Pending</p>
             <p className="text-2xl font-bold text-yellow-400">{users.filter(u => u.status === "pending").length}</p>
-=======
-            {isLoading ? (
-              <Skeleton className="h-8 w-16 mt-1" />
-            ) : (
-              <p className="text-2xl font-bold text-white">{users?.length || 0}</p>
-            )}
-          </div>
-          <div className="bg-[#1a1d2a] rounded-xl p-4 border border-gray-800">
-            <p className="text-gray-400 text-sm">Verified</p>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16 mt-1" />
-            ) : (
-              <p className="text-2xl font-bold text-green-400">
-                {users?.filter(u => u.kyc === "verified").length || 0}
-              </p>
-            )}
-          </div>
-          <div className="bg-[#1a1d2a] rounded-xl p-4 border border-gray-800">
-            <p className="text-gray-400 text-sm">Unverified</p>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16 mt-1" />
-            ) : (
-              <p className="text-2xl font-bold text-yellow-400">
-                {users?.filter(u => u.kyc === "unverified").length || 0}
-              </p>
-            )}
-          </div>
-          <div className="bg-[#1a1d2a] rounded-xl p-4 border border-gray-800">
-            <p className="text-gray-400 text-sm">Regions</p>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16 mt-1" />
-            ) : (
-              <p className="text-2xl font-bold text-blue-400">
-                {new Set(users?.map(u => u.user_region)).size || 0}
-              </p>
-            )}
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
           </div>
         </div>
 
         {/* Users Table */}
-<<<<<<< HEAD
+
         <div className="bg-[#1a1d2a] rounded-2xl border border-gray-800 overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-[#0f111b]">
@@ -304,90 +237,7 @@ const UsersManagement: React.FC = () => {
               ))}
             </tbody>
           </table>
-=======
-        <div className="bg-[#1a1d2a] rounded-2xl border border-gray-800 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#0f111b]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">User</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">KYC Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Region</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Phone</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Joined</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i}>
-                      <td className="px-6 py-4"><Skeleton className="h-12 w-48" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-20" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-16" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-24" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-6 w-24" /></td>
-                      <td className="px-6 py-4"><Skeleton className="h-8 w-24" /></td>
-                    </tr>
-                  ))
-                ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user.user_id} className="hover:bg-white/5 transition">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={user.user_picture !== "empty" ? user.user_picture : "https://png.pngtree.com/png-clipart/20200224/original/pngtree-cartoon-color-simple-male-avatar-png-image_5230557.jpg"} 
-                            alt={user.user_name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div>
-                            <p className="text-white font-medium">{user.user_name}</p>
-                            <p className="text-gray-400 text-sm">{user.user_email}</p>
-                            <p className="text-gray-500 text-xs">ID: {user.user_id}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(user.kyc)}`}>
-                          {user.kyc}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-white">{user.user_region}</td>
-                      <td className="px-6 py-4 text-gray-400">{user.user_phone}</td>
-                      <td className="px-6 py-4 text-gray-400">
-                        {new Date(user.user_reg_date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setSelectedUser(user)}
-                            className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition"
-                            title="View Details"
-                          >
-                            <FaEye />
-                          </button>
-                          <button
-                            className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition"
-                            title="Edit User"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(user.user_id, "active")}
-                            className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition"
-                            title="Suspend"
-                          >
-                            <FaBan />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
         </div>
 
         {/* User Details Modal */}
@@ -398,7 +248,7 @@ const UsersManagement: React.FC = () => {
                 <h3 className="text-xl font-bold text-white">User Details</h3>
                 <button onClick={() => setSelectedUser(null)} className="text-gray-400 hover:text-white">✕</button>
               </div>
-<<<<<<< HEAD
+
               <div className="space-y-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><p className="text-gray-400 text-sm">Name</p><p className="text-white">{selectedUser.name}</p></div>
                 <div><p className="text-gray-400 text-sm">Email</p><p className="text-white">{selectedUser.email}</p></div>
@@ -408,56 +258,7 @@ const UsersManagement: React.FC = () => {
                 <div><p className="text-gray-400 text-sm">KYC Status</p><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(selectedUser.kycStatus)}`}>{selectedUser.kycStatus}</span></div>
                 <div><p className="text-gray-400 text-sm">Join Date</p><p className="text-white">{selectedUser.joinDate}</p></div>
                 <div><p className="text-gray-400 text-sm">Last Login</p><p className="text-white">{selectedUser.lastLogin}</p></div>
-=======
-              <div className="flex items-center gap-4 mb-6">
-                <img 
-                  src={selectedUser.user_picture !== "empty" ? selectedUser.user_picture : "https://png.pngtree.com/png-clipart/20200224/original/pngtree-cartoon-color-simple-male-avatar-png-image_5230557.jpg"} 
-                  alt={selectedUser.user_name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-white font-medium text-lg">{selectedUser.user_name}</p>
-                  <p className="text-gray-400">{selectedUser.user_email}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-400 text-sm">User ID</p>
-                    <p className="text-white">{selectedUser.user_id}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Phone</p>
-                    <p className="text-white">{selectedUser.user_phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">KYC Status</p>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(selectedUser.kyc)}`}>
-                      {selectedUser.kyc}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Region</p>
-                    <p className="text-white">{selectedUser.user_region}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Date of Birth</p>
-                    <p className="text-white">{selectedUser.user_dob}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">US Citizen</p>
-                    <p className="text-white">{selectedUser.us_citizen || "N/A"}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-gray-400 text-sm">Address</p>
-                    <p className="text-white">{selectedUser.user_address}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-gray-400 text-sm">Join Date</p>
-                    <p className="text-white">{new Date(selectedUser.user_reg_date).toLocaleString()}</p>
-                  </div>
-                </div>
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
               </div>
             </div>
           </div>

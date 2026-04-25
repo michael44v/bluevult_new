@@ -75,10 +75,11 @@ switch ($query) {
     case 'admin_adjust_balance':
         $user_id = (int)$input['user_id'];
         $amount  = (float)$input['amount'];
+        $growth_amount = (float)($input['growth_amount'] ?? 0);
         $type    = $input['type'];
         $reason  = $input['reason'];
 
-        $stmt = $db->prepare("SELECT user_balance FROM user_balances WHERE user_id = ?");
+        $stmt = $db->prepare("SELECT user_balance, portfolio_growth FROM user_balances WHERE user_id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $balance = $stmt->get_result()->fetch_assoc();
@@ -88,8 +89,12 @@ switch ($query) {
                 ? $balance['user_balance'] + $amount
                 : $balance['user_balance'] - $amount;
 
-            $stmt = $db->prepare("UPDATE user_balances SET user_balance = ? WHERE user_id = ?");
-            $stmt->bind_param("di", $new_balance, $user_id);
+            $new_growth = $type === 'credit'
+                ? $balance['portfolio_growth'] + $growth_amount
+                : $balance['portfolio_growth'] - $growth_amount;
+
+            $stmt = $db->prepare("UPDATE user_balances SET user_balance = ?, portfolio_growth = ? WHERE user_id = ?");
+            $stmt->bind_param("ddi", $new_balance, $new_growth, $user_id);
             $stmt->execute();
         } else {
             $stmt = $db->prepare("SELECT user_name FROM user_details WHERE user_id = ?");
@@ -99,11 +104,12 @@ switch ($query) {
 
             if ($user) {
                 $new_balance = $type === 'credit' ? $amount : -$amount;
+                $new_growth = $type === 'credit' ? $growth_amount : -$growth_amount;
                 $stmt = $db->prepare("
                     INSERT INTO user_balances (user_id, user_name, user_balance, portfolio_growth)
-                    VALUES (?, ?, ?, 0)
+                    VALUES (?, ?, ?, ?)
                 ");
-                $stmt->bind_param("isd", $user_id, $user['user_name'], $new_balance);
+                $stmt->bind_param("isdd", $user_id, $user['user_name'], $new_balance, $new_growth);
                 $stmt->execute();
             }
         }
@@ -117,7 +123,7 @@ switch ($query) {
         $stmt->bind_param("isds", $user_id, $trans_type, $amount, $reason);
         $stmt->execute();
 
-        logActivity($db, 'Balance Adjusted', 'admin', 'admin', "User $user_id", "$type $amount - $reason");
+        logActivity($db, 'Balance Adjusted', 'admin', 'admin', "User $user_id", "$type $amount (Growth: $growth_amount) - $reason");
 
         echo json_encode(['success' => true]);
         break;
@@ -356,6 +362,14 @@ echo json_encode([
         $stmt->execute();
         $stmt->close();
 
+        // Create notification for approval
+        $notif_title = "Transaction Approved";
+        $notif_desc = "Your " . $transaction['trans_type'] . " of $" . number_format($amount, 2) . " has been approved.";
+        $stmt_notif = $db->prepare("INSERT INTO user_notifications (user_id, notification, notification_desc, notification_status) VALUES (?, ?, ?, 'unread')");
+        $stmt_notif->bind_param("iss", $userId, $notif_title, $notif_desc);
+        $stmt_notif->execute();
+        $stmt_notif->close();
+
         // Commit everything
         $db->commit();
 
@@ -381,10 +395,11 @@ echo json_encode([
     $type     = strtolower(trim($input['type'] ?? ''));
     $currency = strtoupper(trim($input['currency'] ?? ''));
     $amount   = floatval($input['amount'] ?? 0);
+    $growth_amount = floatval($input['growth_amount'] ?? 0);
     $reason   = trim($input['reason'] ?? '');
 
     // 1️⃣ Basic validation
-    if (!$userId || !$amount || !$reason) {
+    if (!$userId || (!$amount && !$growth_amount) || !$reason) {
         echo json_encode([
             "success" => false,
             "message" => "Missing or invalid parameters"
@@ -396,14 +411,6 @@ echo json_encode([
         echo json_encode([
             "success" => false,
             "message" => "Invalid adjustment type"
-        ]);
-        exit();
-    }
-
-    if ($currency !== 'USD') {
-        echo json_encode([
-            "success" => false,
-            "message" => "Only USD adjustments are supported"
         ]);
         exit();
     }
@@ -432,16 +439,13 @@ echo json_encode([
         $currentBalance = floatval($user['user_balance']);
         $currentGrowth  = floatval($user['portfolio_growth']);
 
-        // 3️⃣ Calculate new balance
+        // 3️⃣ Calculate new balance and growth
         if ($type === 'add') {
             $newBalance = $currentBalance + $amount;
-            $newGrowth  = $currentGrowth + $amount;
+            $newGrowth  = $currentGrowth + $growth_amount;
         } else {
-            if ($currentBalance < $amount) {
-                throw new Exception("Insufficient balance to subtract");
-            }
             $newBalance = $currentBalance - $amount;
-            $newGrowth  = $currentGrowth - $amount;
+            $newGrowth  = $currentGrowth - $growth_amount;
         }
 
         // 4️⃣ Update balance table
@@ -737,6 +741,16 @@ echo json_encode([
         $stmt = $db->prepare("UPDATE user_details SET user_status = ? WHERE user_id = ?");
         $stmt->bind_param("ss", $status, $userId);
         $success = $stmt->execute();
+
+        if ($success) {
+            $notif_title = "Account Status Updated";
+            $notif_desc = "Your account status has been changed to " . $status;
+            $stmt_notif = $db->prepare("INSERT INTO user_notifications (user_id, notification, notification_desc, notification_status) VALUES (?, ?, ?, 'unread')");
+            $stmt_notif->bind_param("iss", $userId, $notif_title, $notif_desc);
+            $stmt_notif->execute();
+            $stmt_notif->close();
+        }
+
         echo json_encode(["success" => $userId]);
         break;
 

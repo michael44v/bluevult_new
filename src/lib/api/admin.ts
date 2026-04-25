@@ -176,7 +176,7 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
 }
 
 export async function fetchWithdrawals(): Promise<Transaction[]> {
-<<<<<<< HEAD
+
   const res = await apiRequest<{ data: Transaction[] }>("withdrawals", { q: "admin_get_withdrawals" });
   
      return res.data || [];
@@ -188,9 +188,7 @@ export async function fetchApprovedDeposits() {
   >("transactions", {
     q: "admin_get_approved_deposits"
   });
-=======
-  return apiRequest<Transaction[]>("withdrawals", { q: "admin_get_withdrawals" });
->>>>>>> 41c2da549fdfe9a56159b71ebd6adf0d9558cda5
+
 }
 
 export async function updateTransactionStatus(

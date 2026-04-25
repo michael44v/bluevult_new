@@ -1,11 +1,18 @@
 import React, { useEffect, useRef, memo } from "react";
 import { FaBitcoin } from "react-icons/fa";
 
-const TradingViewWidget: React.FC = () => {
+interface TradingViewWidgetProps {
+    symbol?: string;
+}
+
+const TradingViewWidget: React.FC<TradingViewWidgetProps> = ({ symbol = "BINANCE:BTCUSDT" }) => {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!container.current) return;
+
+    // Clear previous widget
+    container.current.innerHTML = '<div class="tradingview-widget-container__widget"></div>';
 
     const script = document.createElement("script");
     script.src =
@@ -27,7 +34,7 @@ const TradingViewWidget: React.FC = () => {
       locale: "en",
       save_image: true,
       style: "1",
-      symbol: "BINANCE:BTCUSDT",
+      symbol: symbol,
       theme: "light",
       timezone: "Etc/UTC",
       backgroundColor: "#ffffff",
@@ -48,10 +55,10 @@ const TradingViewWidget: React.FC = () => {
         container.current.innerHTML = "";
       }
     };
-  }, []);
+  }, [symbol]);
 
   return (
-   <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 md:p-6">
+   <div className="bg-white dark:bg-[#0a1120] rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 p-4 md:p-6 transition-colors duration-300">
 
   {/* ===== HEADER ===== */}
   <div className="flex items-center justify-between mb-4">
@@ -60,51 +67,26 @@ const TradingViewWidget: React.FC = () => {
         <FaBitcoin className="text-xl" />
       </div>
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">
-          BTC / USDT
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {symbol.split(':')[1]}
         </h2>
-        <p className="text-sm text-gray-500">
-          Binance • Spot Market
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Spot Market
         </p>
       </div>
-    </div>
-
-    <div className="text-right">
-      <p className="text-lg font-bold text-gray-900">$43,280.12</p>
-      <span className="text-sm text-green-500 font-medium">
-        +2.34%
-      </span>
     </div>
   </div>
 
   {/* ===== CHART ===== */}
- <div className="bg-white rounded-2xl shadow-xl p-4">
+ <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
 <div
 className="tradingview-widget-container"
 ref={container}
 style={{ height: "500px", width: "100%" }}
 >
-{/* ⚠️ MUST NOT BE SELF-CLOSING */}
 <div className="tradingview-widget-container__widget"></div>
 </div>
 </div>
-  {/* ===== STATS ROW ===== */}
-  <div className="grid grid-cols-3 gap-4 mt-4 text-center">
-    <div className="bg-gray-50 rounded-lg p-3">
-      <p className="text-xs text-gray-500">24h High</p>
-      <p className="font-semibold text-gray-900">$44,120</p>
-    </div>
-
-    <div className="bg-gray-50 rounded-lg p-3">
-      <p className="text-xs text-gray-500">24h Low</p>
-      <p className="font-semibold text-gray-900">$42,610</p>
-    </div>
-
-    <div className="bg-gray-50 rounded-lg p-3">
-      <p className="text-xs text-gray-500">Volume</p>
-      <p className="font-semibold text-gray-900">12.4K BTC</p>
-    </div>
-  </div>
 
   {/* ===== ACTION BUTTONS ===== */}
   <div className="grid grid-cols-2 gap-4 mt-6">
@@ -113,7 +95,7 @@ style={{ height: "500px", width: "100%" }}
                  bg-gradient-to-r from-green-500 to-emerald-600
                  hover:opacity-90 transition shadow-lg shadow-green-500/30"
     >
-      Buy BTC
+      Buy
     </button>
 
     <button
@@ -121,7 +103,7 @@ style={{ height: "500px", width: "100%" }}
                  bg-gradient-to-r from-red-500 to-rose-600
                  hover:opacity-90 transition shadow-lg shadow-red-500/30"
     >
-      Sell BTC
+      Sell
     </button>
   </div>
 
