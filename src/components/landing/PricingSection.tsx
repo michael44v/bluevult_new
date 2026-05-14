@@ -18,7 +18,7 @@ const plans: PricingPlan[] = [
   {
     name: "Starter",
     icon: <Zap className="w-6 h-6" />,
-    minInvestment: "$100",
+    minInvestment: "$2000",
     expectedROI: "8-12%",
     lockPeriod: "30 days",
     features: [
@@ -33,7 +33,7 @@ const plans: PricingPlan[] = [
   {
     name: "Growth",
     icon: <Star className="w-6 h-6" />,
-    minInvestment: "$1,000",
+    minInvestment: "$10,000",
     expectedROI: "12-18%",
     lockPeriod: "90 days",
     features: [
@@ -50,7 +50,7 @@ const plans: PricingPlan[] = [
   {
     name: "Premium",
     icon: <Crown className="w-6 h-6" />,
-    minInvestment: "$10,000",
+    minInvestment: "$25,000",
     expectedROI: "18-24%",
     lockPeriod: "180 days",
     features: [
