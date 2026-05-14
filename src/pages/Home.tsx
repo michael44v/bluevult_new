@@ -1,12 +1,14 @@
 import Header from "@/components/landing/Header";
 import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
-import ChartsSection from "@/components/landing/ChartsSection";
+import AboutSection from "@/components/landing/AboutSection";
 import PricingSection from "@/components/landing/PricingSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
+
+
 
 const Home = () => {
   return (
@@ -15,7 +17,7 @@ const Home = () => {
       <main>
         <HeroSection />
         <StatsSection />
-        <ChartsSection />
+        <AboutSection />
         <PricingSection />
         <FeaturesSection />
         <TestimonialsSection />

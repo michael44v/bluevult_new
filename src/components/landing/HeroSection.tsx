@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef, JSX } from "react";
+import { useState, useEffect, useRef, useCallback, JSX } from "react";
 import { ArrowRight, Star, Search, ChevronUp, ChevronDown, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import MarketStatsBanner from "../ui/Marketstatsbanner";
 
 /* ─── Types ─── */
-interface SparklineData { price: number[]; }
 interface Coin {
   id: string; symbol: string; name: string; image: string;
   current_price: number; market_cap: number; market_cap_rank: number;
@@ -12,7 +11,7 @@ interface Coin {
   price_change_percentage_24h: number;
   price_change_percentage_1h_in_currency: number;
   price_change_percentage_7d_in_currency: number;
-  sparkline_in_7d?: SparklineData;
+  sparkline_in_7d?: { price: number[] };
   [key: string]: unknown;
 }
 interface GlobalData {
@@ -25,14 +24,14 @@ interface GlobalApiResponse { data: GlobalData; }
 type SortDir = "asc" | "desc";
 
 /* ─── Constants ─── */
-const UP = "#16c784";
-const DOWN = "#ea3943";
-const SLATE = "#0d1421";
+const UP     = "#16c784";
+const DOWN   = "#ea3943";
+const SLATE  = "#0d1421";
 const SLATE2 = "#17212d";
 const BORDER = "#1a2535";
-const TEXT = "#eaecef";
-const MUTED = "#8a919e";
-const BLUE = "#3861fb";
+const TEXT   = "#eaecef";
+const MUTED  = "#8a919e";
+const BLUE   = "#3861fb";
 
 const TOP_COINS = [
   "bitcoin","ethereum","tether","binancecoin","solana",
@@ -40,17 +39,36 @@ const TOP_COINS = [
   "polkadot","chainlink","litecoin","shiba-inu","tron",
 ];
 
+/* ─── TradingView symbol map ─── */
+const TV_SYMBOL: Record<string, string> = {
+  bitcoin:      "BINANCE:BTCUSDT",
+  ethereum:     "BINANCE:ETHUSDT",
+  tether:       "BINANCE:USDTUSD",
+  binancecoin:  "BINANCE:BNBUSDT",
+  solana:       "BINANCE:SOLUSDT",
+  ripple:       "BINANCE:XRPUSDT",
+  "usd-coin":   "BINANCE:USDCUSD",
+  cardano:      "BINANCE:ADAUSDT",
+  "avalanche-2":"BINANCE:AVAXUSDT",
+  dogecoin:     "BINANCE:DOGEUSDT",
+  polkadot:     "BINANCE:DOTUSDT",
+  chainlink:    "BINANCE:LINKUSDT",
+  litecoin:     "BINANCE:LTCUSDT",
+  "shiba-inu":  "BINANCE:SHIBUSDT",
+  tron:         "BINANCE:TRXUSDT",
+};
+
 /* ─── Helpers ─── */
 const fmt = (p: number | null | undefined): string => {
   if (p == null) return "—";
   if (p >= 1000) return "$" + p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (p >= 1) return "$" + p.toFixed(4);
+  if (p >= 1)    return "$" + p.toFixed(4);
   return "$" + p.toFixed(6);
 };
 const fmtCap = (v: number | null | undefined): string => {
   if (!v) return "—";
   if (v >= 1e12) return "$" + (v / 1e12).toFixed(2) + "T";
-  if (v >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+  if (v >= 1e9)  return "$" + (v / 1e9).toFixed(2)  + "B";
   return "$" + (v / 1e6).toFixed(2) + "M";
 };
 const fmtPct = (c: number | null | undefined): string => {
@@ -77,56 +95,51 @@ function Sparkline({ data, color }: { data: number[]; color: string }): JSX.Elem
   );
 }
 
-/* ─── LiveChart (Canvas) ─── */
-function LiveChart({ prices }: { prices: number[]; coin: Coin }): JSX.Element {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+/* ─── TradingView Mini Chart ─── */
+function LiveChart({ coin }: { coin: Coin }): JSX.Element {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const symbol = TV_SYMBOL[coin.id] ?? `BINANCE:${coin.symbol.toUpperCase()}USDT`;
+
   useEffect(() => {
-    if (!prices?.length || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    const W = canvas.offsetWidth, H = canvas.offsetHeight;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    ctx.scale(dpr, dpr);
-    const min = Math.min(...prices), max = Math.max(...prices);
-    const range = max - min || 1;
-    const pad = { top: 10, bottom: 24, left: 8, right: 8 };
-    const chartW = W - pad.left - pad.right, chartH = H - pad.top - pad.bottom;
-    const isUp = prices[prices.length - 1] >= prices[0];
-    const lineColor = isUp ? UP : DOWN;
-    ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = BORDER; ctx.lineWidth = 0.5;
-    [0.25, 0.5, 0.75].forEach((frac) => {
-      const y = pad.top + frac * chartH;
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    if (!containerRef.current) return;
+    // Clear previous widget
+    containerRef.current.innerHTML = "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "tradingview-widget-container";
+    wrapper.style.cssText = "width:100%;height:100%";
+
+    const inner = document.createElement("div");
+    inner.className = "tradingview-widget-container__widget";
+    inner.style.cssText = "width:100%;height:100%";
+    wrapper.appendChild(inner);
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      symbol,
+      width:         "100%",
+      height:        "100%",
+      locale:        "en",
+      dateRange:     "7D",
+      colorTheme:    "dark",
+      isTransparent: true,
+      autosize:      true,
+      noTimeScale:   false,
     });
-    const pts = prices.map((v, i) => ({
-      x: pad.left + (i / (prices.length - 1)) * chartW,
-      y: pad.top + chartH - ((v - min) / range) * chartH,
-    }));
-    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
-    ctx.lineTo(pts[pts.length - 1].x, pad.top + chartH);
-    ctx.lineTo(pts[0].x, pad.top + chartH);
-    ctx.closePath();
-    ctx.fillStyle = isUp ? "rgba(22,199,132,0.08)" : "rgba(234,57,67,0.08)";
-    ctx.fill();
-    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach((p) => ctx.lineTo(p.x, p.y));
-    ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.stroke();
-    const last = pts[pts.length - 1];
-    ctx.beginPath(); ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = lineColor; ctx.fill();
-    const labels = ["7d ago","6d","5d","4d","3d","2d","1d","Now"];
-    ctx.fillStyle = MUTED; ctx.font = "9px Inter, sans-serif"; ctx.textAlign = "center";
-    const step = Math.floor(prices.length / (labels.length - 1));
-    labels.forEach((label, i) => {
-      const idx = Math.min(i * step, prices.length - 1);
-      ctx.fillText(label, pts[idx].x, H - 4);
-    });
-  }, [prices]);
-  return <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} />;
+
+    wrapper.appendChild(script);
+    containerRef.current.appendChild(wrapper);
+  }, [symbol]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: "100%", height: "100%", minHeight: 160 }}
+    />
+  );
 }
 
 /* ─── SortIcon ─── */
@@ -134,51 +147,33 @@ function SortIcon({ col, sortBy, sortDir }: { col: string; sortBy: string; sortD
   if (sortBy !== col) return <span style={{ color: "#3a4a5c" }}>↕</span>;
   return sortDir === "desc"
     ? <ChevronDown className="w-3 h-3 inline" style={{ color: BLUE }} />
-    : <ChevronUp className="w-3 h-3 inline" style={{ color: BLUE }} />;
+    : <ChevronUp   className="w-3 h-3 inline" style={{ color: BLUE }} />;
 }
 
 /* ─── Mobile Coin Card ─── */
 function MobileCoinCard({ coin, isSelected, onClick }: { coin: Coin; isSelected: boolean; onClick: () => void }) {
-  const d24 = coin.price_change_percentage_24h ?? 0;
-  const d7 = coin.price_change_percentage_7d_in_currency ?? 0;
+  const d24      = coin.price_change_percentage_24h ?? 0;
+  const d7       = coin.price_change_percentage_7d_in_currency ?? 0;
   const sparkData = (coin.sparkline_in_7d?.price ?? []).filter((_, i) => i % 8 === 0);
   return (
     <div
       onClick={onClick}
       className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
-      style={{
-        borderBottom: `1px solid ${BORDER}`,
-        background: isSelected ? "rgba(56,97,251,0.06)" : "transparent",
-      }}
+      style={{ borderBottom: `1px solid ${BORDER}`, background: isSelected ? "rgba(56,97,251,0.06)" : "transparent" }}
     >
-      {/* Rank + star */}
-      <div className="w-6 text-center text-xs shrink-0" style={{ color: MUTED }}>
-        {coin.market_cap_rank}
-      </div>
-
-      {/* Logo */}
-      <img
-        src={coin.image}
-        alt={coin.name}
-        className="w-8 h-8 rounded-full shrink-0"
-        onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
-      />
-
-      {/* Name + symbol */}
+      <div className="w-6 text-center text-xs shrink-0" style={{ color: MUTED }}>{coin.market_cap_rank}</div>
+      <img src={coin.image} alt={coin.name} className="w-8 h-8 rounded-full shrink-0"
+        onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-semibold truncate" style={{ color: TEXT }}>{coin.name}</div>
         <div className="text-xs uppercase" style={{ color: MUTED }}>{coin.symbol}</div>
       </div>
-
-      {/* Price + 24h */}
       <div className="text-right shrink-0">
         <div className="text-sm font-bold" style={{ color: TEXT }}>{fmt(coin.current_price)}</div>
         <div className="text-xs font-semibold" style={{ color: pctColor(d24) }}>
           {d24 >= 0 ? "▲" : "▼"} {Math.abs(d24).toFixed(2)}%
         </div>
       </div>
-
-      {/* Sparkline */}
       <div className="shrink-0 hidden xs:block">
         <Sparkline data={sparkData} color={pctColor(d7)} />
       </div>
@@ -187,17 +182,11 @@ function MobileCoinCard({ coin, isSelected, onClick }: { coin: Coin; isSelected:
 }
 
 /* ─── Mobile Coin Detail Drawer ─── */
-function CoinDetailDrawer({
-  coin,
-  onClose,
-}: {
-  coin: Coin | null;
-  onClose: () => void;
-}) {
+function CoinDetailDrawer({ coin, onClose }: { coin: Coin | null; onClose: () => void }) {
   if (!coin) return null;
   const d24 = coin.price_change_percentage_24h ?? 0;
-  const d7 = coin.price_change_percentage_7d_in_currency ?? 0;
-  const h1 = coin.price_change_percentage_1h_in_currency ?? 0;
+  const d7  = coin.price_change_percentage_7d_in_currency ?? 0;
+  const h1  = coin.price_change_percentage_1h_in_currency ?? 0;
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col justify-end"
@@ -209,9 +198,7 @@ function CoinDetailDrawer({
         style={{ background: SLATE2, border: `1px solid ${BORDER}` }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle */}
         <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: BORDER }} />
-
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <img src={coin.image} alt={coin.name} className="w-10 h-10 rounded-full" />
@@ -220,32 +207,20 @@ function CoinDetailDrawer({
               <div className="text-xs uppercase" style={{ color: MUTED }}>{coin.symbol}/USD</div>
             </div>
           </div>
-          <button onClick={onClose}>
-            <X className="w-5 h-5" style={{ color: MUTED }} />
-          </button>
+          <button onClick={onClose}><X className="w-5 h-5" style={{ color: MUTED }} /></button>
         </div>
-
-        <div className="text-2xl font-extrabold mb-1" style={{ color: TEXT }}>
-          {fmt(coin.current_price)}
-        </div>
-        <div className="text-sm font-bold mb-5" style={{ color: pctColor(d24) }}>
-          {fmtPct(d24)} (24h)
-        </div>
-
+        <div className="text-2xl font-extrabold mb-1" style={{ color: TEXT }}>{fmt(coin.current_price)}</div>
+        <div className="text-sm font-bold mb-5" style={{ color: pctColor(d24) }}>{fmtPct(d24)} (24h)</div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { l: "1h Change", v: fmtPct(h1), c: pctColor(h1) },
-            { l: "7d Change", v: fmtPct(d7), c: pctColor(d7) },
-            { l: "Market Cap", v: fmtCap(coin.market_cap), c: TEXT },
-            { l: "24h Volume", v: fmtCap(coin.total_volume), c: TEXT },
-            { l: "24h High", v: fmt(coin.high_24h), c: UP },
-            { l: "24h Low", v: fmt(coin.low_24h), c: DOWN },
+            { l: "1h Change", v: fmtPct(h1),              c: pctColor(h1) },
+            { l: "7d Change", v: fmtPct(d7),              c: pctColor(d7) },
+            { l: "Market Cap",v: fmtCap(coin.market_cap), c: TEXT },
+            { l: "24h Volume",v: fmtCap(coin.total_volume),c: TEXT },
+            { l: "24h High",  v: fmt(coin.high_24h),      c: UP },
+            { l: "24h Low",   v: fmt(coin.low_24h),       c: DOWN },
           ].map((s) => (
-            <div
-              key={s.l}
-              className="rounded-xl p-3"
-              style={{ background: "#1e2d3d" }}
-            >
+            <div key={s.l} className="rounded-xl p-3" style={{ background: "#1e2d3d" }}>
               <div className="text-xs mb-1" style={{ color: MUTED }}>{s.l}</div>
               <div className="text-sm font-bold" style={{ color: s.c }}>{s.v}</div>
             </div>
@@ -258,18 +233,17 @@ function CoinDetailDrawer({
 
 /* ─── Main Component ─── */
 export default function HeroSection(): JSX.Element {
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [globalStats, setGlobalStats] = useState<GlobalData | null>(null);
+  const [coins, setCoins]               = useState<Coin[]>([]);
+  const [globalStats, setGlobalStats]   = useState<GlobalData | null>(null);
   const [featuredCoin, setFeaturedCoin] = useState<Coin | null>(null);
-  const [chartPrices, setChartPrices] = useState<number[]>([]);
-  const [activeTab, setActiveTab] = useState("all");
-  const [sortBy, setSortBy] = useState("market_cap");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab]       = useState("all");
+  const [sortBy, setSortBy]             = useState("market_cap");
+  const [sortDir, setSortDir]           = useState<SortDir>("desc");
+  const [loading, setLoading]           = useState(true);
+  const [lastUpdated, setLastUpdated]   = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery]   = useState("");
   const [mobileDrawerCoin, setMobileDrawerCoin] = useState<Coin | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile]         = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -278,9 +252,9 @@ export default function HeroSection(): JSX.Element {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const fetchCoins = async () => {
+  const fetchCoins = useCallback(async () => {
     try {
-      const res = await fetch(
+      const res  = await fetch(
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${TOP_COINS.join(",")}&order=market_cap_desc&per_page=15&page=1&sparkline=true&price_change_percentage=1h,24h,7d`
       );
       const data: Coin[] = await res.json();
@@ -291,38 +265,22 @@ export default function HeroSection(): JSX.Element {
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  };
+  }, []);
 
-  const fetchGlobal = async () => {
+  const fetchGlobal = useCallback(async () => {
     try {
-      const res = await fetch("https://api.coingecko.com/api/v3/global");
+      const res  = await fetch("https://api.coingecko.com/api/v3/global");
       const data: GlobalApiResponse = await res.json();
       if (data?.data) setGlobalStats(data.data);
     } catch (e) { console.error(e); }
-  };
-
-  const fetchChart = async (coinId: string) => {
-    try {
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7&interval=hourly`
-      );
-      const data: { prices: [number, number][] } = await res.json();
-      if (data?.prices) {
-        setChartPrices(data.prices.filter((_, i) => i % 4 === 0).map((p) => p[1]));
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  useEffect(() => {
-    fetchCoins(); fetchGlobal();
-    const i1 = setInterval(fetchCoins, 30000);
-    const i2 = setInterval(fetchGlobal, 60000);
-    return () => { clearInterval(i1); clearInterval(i2); };
   }, []);
 
   useEffect(() => {
-    if (featuredCoin) fetchChart(featuredCoin.id);
-  }, [featuredCoin?.id]);
+    fetchCoins(); fetchGlobal();
+    const i1 = setInterval(fetchCoins,  30_000);
+    const i2 = setInterval(fetchGlobal, 60_000);
+    return () => { clearInterval(i1); clearInterval(i2); };
+  }, [fetchCoins, fetchGlobal]);
 
   const handleSort = (col: string) => {
     if (sortBy === col) setSortDir((p) => (p === "desc" ? "asc" : "desc"));
@@ -342,19 +300,19 @@ export default function HeroSection(): JSX.Element {
   });
 
   const tabs = [
-    { key: "all", label: "All Cryptos" },
-    { key: "defi", label: "DeFi" },
-    { key: "nfts", label: "NFTs" },
-    { key: "metaverse", label: "Metaverse" },
-    { key: "layer1", label: "Layer 1" },
+    { key: "all",       label: "All Cryptos" },
+    { key: "defi",      label: "DeFi"        },
+    { key: "nfts",      label: "NFTs"        },
+    { key: "metaverse", label: "Metaverse"   },
+    { key: "layer1",    label: "Layer 1"     },
   ];
 
-  const tableColumns: { key: string; label: string }[] = [
-    { key: "current_price", label: "Price" },
-    { key: "price_change_percentage_1h_in_currency", label: "1h%" },
-    { key: "price_change_percentage_24h", label: "24h%" },
-    { key: "price_change_percentage_7d_in_currency", label: "7d%" },
-    { key: "market_cap", label: "Mkt Cap" },
+  const tableColumns = [
+    { key: "current_price",                          label: "Price"   },
+    { key: "price_change_percentage_1h_in_currency", label: "1h%"    },
+    { key: "price_change_percentage_24h",            label: "24h%"   },
+    { key: "price_change_percentage_7d_in_currency", label: "7d%"    },
+    { key: "market_cap",                             label: "Mkt Cap" },
   ];
 
   return (
@@ -390,8 +348,8 @@ export default function HeroSection(): JSX.Element {
                   {[
                     { label: "Market Cap", value: fmtCap(globalStats.total_market_cap?.usd), change: globalStats.market_cap_change_percentage_24h_usd },
                     { label: "24h Volume", value: fmtCap(globalStats.total_volume?.usd) },
-                    { label: "BTC Dom.", value: `${(globalStats.market_cap_percentage?.btc ?? 0).toFixed(1)}%` },
-                    { label: "ETH Dom.", value: `${(globalStats.market_cap_percentage?.eth ?? 0).toFixed(1)}%` },
+                    { label: "BTC Dom.",   value: `${(globalStats.market_cap_percentage?.btc ?? 0).toFixed(1)}%` },
+                    { label: "ETH Dom.",   value: `${(globalStats.market_cap_percentage?.eth ?? 0).toFixed(1)}%` },
                   ].map((s) => (
                     <div key={s.label} className="rounded-xl px-4 py-3" style={{ background: "#1e2d3d", minWidth: 100 }}>
                       <div className="text-xs font-medium mb-1" style={{ color: MUTED }}>{s.label}</div>
@@ -440,10 +398,11 @@ export default function HeroSection(): JSX.Element {
               </div>
             </div>
 
-            {/* RIGHT: Featured chart */}
+            {/* RIGHT: TradingView Featured Chart */}
             <div>
               {featuredCoin ? (
                 <div className="rounded-2xl p-5" style={{ background: "#1e2d3d", border: `1px solid ${BORDER}` }}>
+                  {/* Coin selector tabs */}
                   <div className="flex gap-2 mb-4 flex-wrap">
                     {coins.slice(0, 5).map((c) => (
                       <button
@@ -452,8 +411,8 @@ export default function HeroSection(): JSX.Element {
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background: featuredCoin.id === c.id ? BLUE : "#17212d",
-                          color: featuredCoin.id === c.id ? "#fff" : MUTED,
-                          border: `1px solid ${featuredCoin.id === c.id ? BLUE : BORDER}`,
+                          color:      featuredCoin.id === c.id ? "#fff" : MUTED,
+                          border:     `1px solid ${featuredCoin.id === c.id ? BLUE : BORDER}`,
                         }}
                       >
                         <img src={c.image} alt={c.symbol} className="w-3.5 h-3.5 rounded-full"
@@ -463,7 +422,8 @@ export default function HeroSection(): JSX.Element {
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between mb-1">
+                  {/* Coin header */}
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <img src={featuredCoin.image} alt={featuredCoin.name} className="w-8 h-8 rounded-full" />
                       <div>
@@ -480,20 +440,18 @@ export default function HeroSection(): JSX.Element {
                     </div>
                   </div>
 
+                  {/* TradingView chart */}
                   <div style={{ height: 160, marginTop: 12 }}>
-                    {chartPrices.length > 0
-                      ? <LiveChart prices={chartPrices} coin={featuredCoin} />
-                      : <div className="w-full h-full rounded-xl flex items-center justify-center text-xs animate-pulse"
-                          style={{ background: "#17212d", color: MUTED }}>Loading chart…</div>
-                    }
+                    <LiveChart coin={featuredCoin} />
                   </div>
 
+                  {/* Stats footer */}
                   <div className="flex justify-between mt-3 pt-3 text-xs" style={{ borderTop: `1px solid ${BORDER}` }}>
                     {[
                       { l: "24h High", v: fmt(featuredCoin.high_24h) },
-                      { l: "24h Low", v: fmt(featuredCoin.low_24h) },
-                      { l: "Mkt Cap", v: fmtCap(featuredCoin.market_cap) },
-                      { l: "Volume", v: fmtCap(featuredCoin.total_volume) },
+                      { l: "24h Low",  v: fmt(featuredCoin.low_24h)  },
+                      { l: "Mkt Cap",  v: fmtCap(featuredCoin.market_cap) },
+                      { l: "Volume",   v: fmtCap(featuredCoin.total_volume) },
                     ].map((s) => (
                       <div key={s.l} className="text-center">
                         <div style={{ color: MUTED }}>{s.l}</div>
@@ -523,8 +481,8 @@ export default function HeroSection(): JSX.Element {
                 className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                 style={{
                   background: activeTab === tab.key ? BLUE : "#1e2d3d",
-                  color: activeTab === tab.key ? "#fff" : MUTED,
-                  border: `1px solid ${activeTab === tab.key ? BLUE : BORDER}`,
+                  color:      activeTab === tab.key ? "#fff" : MUTED,
+                  border:     `1px solid ${activeTab === tab.key ? BLUE : BORDER}`,
                 }}
               >
                 {tab.label}
@@ -552,7 +510,6 @@ export default function HeroSection(): JSX.Element {
           className="rounded-2xl overflow-hidden hidden md:block"
           style={{ background: SLATE2, border: `1px solid ${BORDER}` }}
         >
-          {/* Head */}
           <div
             className="grid text-xs font-semibold uppercase px-4 py-3"
             style={{
@@ -572,7 +529,6 @@ export default function HeroSection(): JSX.Element {
             <div className="text-right">7d Chart</div>
           </div>
 
-          {/* Body */}
           {loading ? (
             Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="grid px-4 py-3 animate-pulse"
@@ -587,9 +543,9 @@ export default function HeroSection(): JSX.Element {
             ))
           ) : (
             sorted.map((coin) => {
-              const h1 = coin.price_change_percentage_1h_in_currency ?? 0;
-              const d24 = coin.price_change_percentage_24h ?? 0;
-              const d7 = coin.price_change_percentage_7d_in_currency ?? 0;
+              const h1        = coin.price_change_percentage_1h_in_currency ?? 0;
+              const d24       = coin.price_change_percentage_24h ?? 0;
+              const d7        = coin.price_change_percentage_7d_in_currency ?? 0;
               const sparkData = (coin.sparkline_in_7d?.price ?? []).filter((_, i) => i % 8 === 0);
               const isSelected = featuredCoin?.id === coin.id;
               return (
@@ -599,8 +555,8 @@ export default function HeroSection(): JSX.Element {
                   style={{
                     gridTemplateColumns: "32px 2fr 1fr 90px 90px 90px 110px 90px",
                     borderBottom: `1px solid ${BORDER}`,
-                    background: isSelected ? "rgba(56,97,251,0.06)" : "transparent",
-                    alignItems: "center",
+                    background:   isSelected ? "rgba(56,97,251,0.06)" : "transparent",
+                    alignItems:   "center",
                   }}
                   onClick={() => setFeaturedCoin(coin)}
                   onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "#1e2d3d"; }}
@@ -641,16 +597,15 @@ export default function HeroSection(): JSX.Element {
           className="rounded-2xl overflow-hidden md:hidden"
           style={{ background: SLATE2, border: `1px solid ${BORDER}` }}
         >
-          {/* Mobile sort bar */}
           <div
             className="flex items-center gap-2 px-4 py-2 overflow-x-auto"
             style={{ borderBottom: `1px solid ${BORDER}` }}
           >
             <span className="text-xs shrink-0" style={{ color: MUTED }}>Sort:</span>
             {[
-              { key: "market_cap", label: "Mkt Cap" },
-              { key: "current_price", label: "Price" },
-              { key: "price_change_percentage_24h", label: "24h%" },
+              { key: "market_cap",                  label: "Mkt Cap" },
+              { key: "current_price",               label: "Price"   },
+              { key: "price_change_percentage_24h", label: "24h%"    },
             ].map((s) => (
               <button
                 key={s.key}
@@ -658,15 +613,15 @@ export default function HeroSection(): JSX.Element {
                 className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-all"
                 style={{
                   background: sortBy === s.key ? BLUE : "#1e2d3d",
-                  color: sortBy === s.key ? "#fff" : MUTED,
-                  border: `1px solid ${sortBy === s.key ? BLUE : BORDER}`,
+                  color:      sortBy === s.key ? "#fff" : MUTED,
+                  border:     `1px solid ${sortBy === s.key ? BLUE : BORDER}`,
                 }}
               >
                 {s.label}
                 {sortBy === s.key && (
                   sortDir === "desc"
                     ? <ChevronDown className="w-3 h-3" />
-                    : <ChevronUp className="w-3 h-3" />
+                    : <ChevronUp   className="w-3 h-3" />
                 )}
               </button>
             ))}
@@ -678,7 +633,7 @@ export default function HeroSection(): JSX.Element {
                 <div className="w-8 h-8 rounded-full shrink-0" style={{ background: "#1e2d3d" }} />
                 <div className="flex-1">
                   <div className="w-24 h-3 rounded mb-1" style={{ background: "#1e2d3d" }} />
-                  <div className="w-16 h-3 rounded" style={{ background: "#1e2d3d" }} />
+                  <div className="w-16 h-3 rounded"       style={{ background: "#1e2d3d" }} />
                 </div>
                 <div className="w-20 h-3 rounded" style={{ background: "#1e2d3d" }} />
               </div>
@@ -689,10 +644,7 @@ export default function HeroSection(): JSX.Element {
                 key={coin.id}
                 coin={coin}
                 isSelected={featuredCoin?.id === coin.id}
-                onClick={() => {
-                  setFeaturedCoin(coin);
-                  setMobileDrawerCoin(coin);
-                }}
+                onClick={() => { setFeaturedCoin(coin); setMobileDrawerCoin(coin); }}
               />
             ))
           )}
