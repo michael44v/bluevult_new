@@ -23,8 +23,8 @@ const CTASection = () => {
 
           {/* Subheadline */}
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Join over 500,000 investors who trust CryptoVault with their crypto portfolios.
-            Start with as little as $100 today.
+            Join over 500,000 investors who trust BlueVult with their crypto portfolios.
+            Start with as little as $2000 today.
           </p>
 
           {/* Email Signup Form */}

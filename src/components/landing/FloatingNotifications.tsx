@@ -25,94 +25,87 @@ const notifications = [
 
 const FloatingNotifications = () => {
   const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % notifications.length);
+      // Fade out first
+      setVisible(false);
+
+      // After fade-out, switch notification and fade back in
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % notifications.length);
+        setVisible(true);
+      }, 400); // matches fade-out duration
     }, 4000);
 
     return () => clearInterval(interval);
   }, []);
+
+  const text = notifications[index];
+  const isWithdraw = text.toLowerCase().includes("withdrew");
+  const isEarned = text.toLowerCase().includes("earned");
+  const dotColor = isWithdraw ? "#ef4444" : isEarned ? "#f59e0b" : "#22c55e";
 
   return (
     <>
       <div
         style={{
           position: "fixed",
-          left: 20,
+          left: 16,
           bottom: 20,
           zIndex: 999999,
-          background: "#111827",
-          border: "1px solid rgba(56,97,251,0.3)",
+          background: "#ffffff",
+          border: "1px solid rgba(0,0,0,0.08)",
           borderRadius: 14,
-          padding: "14px 18px",
+          padding: "12px 16px",
           display: "flex",
           alignItems: "center",
           gap: 12,
-          minWidth: 300,
-          boxShadow: "0 10px 35px rgba(0,0,0,0.45)",
-          animation: "fadeSlide 0.4s ease",
+          maxWidth: 300,         // cap width — won't stretch full viewport
+          width: "calc(100vw - 32px)", // fills mobile but capped at 300px via maxWidth
+          boxShadow: "0 4px 24px rgba(0,0,0,0.10)",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(8px)",
+          transition: "opacity 0.4s ease, transform 0.4s ease",
         }}
       >
         <div
           style={{
-            width: 10,
-            height: 10,
+            width: 9,
+            height: 9,
             borderRadius: "50%",
-            background: "#22c55e",
-            boxShadow: "0 0 10px #22c55e",
+            background: dotColor,
+            boxShadow: `0 0 8px ${dotColor}`,
             flexShrink: 0,
           }}
         />
-
-        <div>
+        <div style={{ overflow: "hidden" }}>
           <p
             style={{
-              color: "#fff",
+              color: "#111827",
               margin: 0,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
-              fontFamily: "Roboto, sans-serif",
+              fontFamily: "'DM Sans', sans-serif",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
-            {notifications[index]}
+            {text}
           </p>
-
           <span
             style={{
-              color: "rgba(255,255,255,0.55)",
+              color: "rgba(0,0,0,0.4)",
               fontSize: 11,
-              fontFamily: "Roboto, sans-serif",
+              fontFamily: "'DM Sans', sans-serif",
             }}
           >
             Just now
           </span>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeSlide {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @media (max-width: 600px) {
-          div[style*="position: fixed"] {
-            left: 12px !important;
-            right: 12px !important;
-            min-width: unset !important;
-            width: auto !important;
-            bottom: 12px !important;
-          }
-        }
-      `}</style>
     </>
   );
 };
