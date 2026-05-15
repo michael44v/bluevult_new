@@ -20,7 +20,7 @@ const TradingViewWidget: React.FC<TradingViewWidgetProps> = ({ symbol = "BINANCE
     script.type = "text/javascript";
     script.async = true;
 
-    // TradingView widget configuration
+    // T radingView widget configuration
     script.innerHTML = JSON.stringify({
       allow_symbol_change: true,
       calendar: false,

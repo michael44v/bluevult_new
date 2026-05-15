@@ -36,7 +36,7 @@ const BLUE   = "#3861fb";
 const TOP_COINS = [
   "bitcoin","ethereum","tether","binancecoin","solana",
   "ripple","usd-coin","cardano","avalanche-2","dogecoin",
-  "polkadot","chainlink","litecoin","shiba-inu","tron",
+  "polkadot","chainlink","litecoin","shiba-inu","tron","SoValueEth"
 ];
 
 /* ─── TradingView symbol map ─── */
@@ -56,6 +56,7 @@ const TV_SYMBOL: Record<string, string> = {
   litecoin:     "BINANCE:LTCUSDT",
   "shiba-inu":  "BINANCE:SHIBUSDT",
   tron:         "BINANCE:TRXUSDT",
+  "SoValueEth":     "BINANCE:ETHUSDT",
 };
 
 /* ─── Helpers ─── */
@@ -651,7 +652,7 @@ export default function HeroSection(): JSX.Element {
         </div>
 
         <p className="text-xs text-center mt-4" style={{ color: MUTED }}>
-          Data by CoinGecko · Updates every 30s{isMobile && " · Tap a row for details"}
+          Data by BlueVult · Updates every 30s{isMobile && " · Tap a row for details"}
         </p>
       </section>
 
