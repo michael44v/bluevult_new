@@ -1,16 +1,16 @@
 import React from "react";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
-import { SiBinance, SiCoinbase, SiKraken, SiOkx, SiBybit } from "react-icons/si";
+import { SiBinance, SiCoinbase, SiOkx } from "react-icons/si";
 import { FaGlobe, FaShieldAlt, FaBolt, FaExchangeAlt, FaCheckCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const exchanges = [
   { name: "Binance", icon: SiBinance, color: "text-[#F3BA2F]", volume: "$12.4B", rating: 9.8 },
   { name: "Coinbase", icon: SiCoinbase, color: "text-[#0052FF]", volume: "$2.1B", rating: 9.5 },
-  { name: "Kraken", icon: SiKraken, color: "text-[#5841D8]", volume: "$0.8B", rating: 9.2 },
+  { name: "BitMEX", icon: SiCoinbase, color: "text-red-500", volume: "$0.8B", rating: 9.2 },
   { name: "OKX", icon: SiOkx, color: "text-white", volume: "$1.5B", rating: 8.9 },
-  { name: "Bybit", icon: SiBybit, color: "text-[#F3BA2F]", volume: "$1.2B", rating: 8.7 },
+  { name: "Bitpanda", icon: SiCoinbase, color: "text-teal-400", volume: "$1.2B", rating: 8.7 },
 ];
 
 const Exchanges: React.FC = () => {
@@ -51,8 +51,8 @@ const Exchanges: React.FC = () => {
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-green-500 rounded-full"
+                          <div 
+                            className="h-full bg-green-500 rounded-full" 
                             style={{ width: `${ex.rating * 10}%` }}
                           ></div>
                         </div>
