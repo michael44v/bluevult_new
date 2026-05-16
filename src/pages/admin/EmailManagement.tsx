@@ -57,28 +57,6 @@ const EmailManagement: React.FC = () => {
     const user = users.find(u => u.email === selectedUserEmail);
     const userName = user ? user.name : "User";
 
-    // Design the HTML template
-    const htmlMessage = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0d1421; color: #ffffff; padding: 20px; border-radius: 10px;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #3861fb; margin: 0;">BlueVult</h1>
-        </div>
-        <div style="background-color: #17212d; padding: 20px; border-radius: 8px; border: 1px solid #1a2535;">
-          <h2 style="color: #ffffff; margin-top: 0;">Hello ${userName},</h2>
-          <p style="color: #8a919e; line-height: 1.6; font-size: 16px;">
-            ${message.replace(/\n/g, '<br>')}
-          </p>
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #1a2535; text-align: center;">
-            <a href="https://bluevult.com/dashboard" style="background-color: #3861fb; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Go to Dashboard</a>
-          </div>
-        </div>
-        <div style="text-align: center; margin-top: 20px; color: #4a5568; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} BlueVult. All rights reserved.</p>
-          <p>Security and Reliability in Crypto Trading.</p>
-        </div>
-      </div>
-    `;
-
     try {
       const res = await fetch("https://bluevult.com/api/mail.php", {
         method: "POST",
@@ -87,7 +65,7 @@ const EmailManagement: React.FC = () => {
           email: selectedUserEmail,
           name: userName,
           subject: subject,
-          message: htmlMessage, // The API seems to take 'message' and send it
+          message: message,
         }),
       });
 

@@ -67,37 +67,30 @@ $linkButton = $link !== '#' ? "
 
 $mail->Body = "
 <html>
-<body style='font-family:Arial,sans-serif; background:#f4f4f4; padding:0; margin:0;'>
-<div style='max-width:600px; margin:20px auto; background:#fff; padding:20px; border-radius:8px;'>
-    <div style='text-align:center; margin-bottom:20px;'>
-        <a href='https://bluevult.com' style='display:block;'>
-            <img 
-                src='https://bluevult.com/img/BlurVultage.png'
-                alt='BlueVult'
-                style='
-                    width:100%;
-                    max-width:520px;
-                    height:auto;
-                    display:block;
-                    margin:0 auto;
-                    border-radius:6px;
-                '
-            />
+<body style='font-family:Arial,sans-serif; background:#0d1421; color:#ffffff; padding:0; margin:0;'>
+<div style='max-width:600px; margin:20px auto; background:#17212d; padding:30px; border-radius:16px; border: 1px solid #1a2535;'>
+    <div style='text-align:center; margin-bottom:30px;'>
+        <a href='https://bluevult.com' style='display:inline-block; text-decoration:none;'>
+            <h1 style='color:#3861fb; margin:0; font-size:32px; font-weight:bold;'>BlueVult</h1>
         </a>
     </div>
-    <h2 style='color:#2e6c80; text-align:center;'>$subject</h2>
-    <p>Dear <strong>$name</strong>,</p>
-    <p>Email: $email</p>
-    <p>$messageText</p>
+    <div style='margin-bottom:25px;'>
+        <h2 style='color:#ffffff; margin-top:0; font-size:24px;'>Hello $name,</h2>
+        <div style='color:#8a919e; line-height:1.6; font-size:16px;'>
+            " . nl2br($messageText) . "
+        </div>
+    </div>
     $linkButton
-    <hr style='margin:20px 0;'/>
-    <p style='font-size:12px; color:#888; text-align:center;'>
+    <div style='margin-top:30px; padding-top:20px; border-top:1px solid #1a2535; text-align:center;'>
+        <a href='https://bluevult.com/dashboard' style='display:inline-block; background:#3861fb; color:#ffffff; text-decoration:none; padding:12px 25px; border-radius:8px; font-weight:bold;'>Go to Dashboard</a>
+    </div>
+    <div style='font-size:12px; color:#4a5568; text-align:center; margin-top:30px;'>
         <strong>BlueVult Ltd.</strong><br/>
-        <a href='https://bluevult.com'>Website</a> |
-        <a href='https://bluevult.com/privacy-policy'>Privacy Policy</a><br/>
-        © 2024 BlueVult. All rights reserved.<br/>
+        <a href='https://bluevult.com' style='color:#3861fb;'>Website</a> |
+        <a href='https://bluevult.com/privacy-policy' style='color:#3861fb;'>Privacy Policy</a><br/>
+        © " . date("Y") . " BlueVult. All rights reserved.<br/>
         This email was sent automatically. Do not reply.
-    </p>
+    </div>
 </div>
 </body>
 </html>
