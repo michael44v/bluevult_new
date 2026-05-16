@@ -40,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [profilePic, setProfilePic] = useState(""); // stores profile image URL
+  const [userBalance, setUserBalance] = useState<number>(0);
   const defaultAvatar = "https://png.pngtree.com/png-clipart/20200224/original/pngtree-cartoon-color-simple-male-avatar-png-image_5230557.jpg"; 
 
   // Persist UID and username from localStorage
@@ -89,8 +90,10 @@ useEffect(() => {
         localStorage.setItem("user_name", data.user_name);
         localStorage.setItem("user_email", data.user_email);
         localStorage.setItem("user_image_url", data.profile);
+        localStorage.setItem("user_balance", data.balance.toString());
         //email
         setUserName(data.user_name);
+        setUserBalance(data.balance);
          }
       }
 
@@ -212,7 +215,9 @@ useEffect(() => {
             )}
           </div>
 
-          <SidebarItem to="/kyc_verify" label="KYC" Icon={FaUserCheck} />
+          {userBalance >= 500000 && (
+            <SidebarItem to="/kyc_verify" label="KYC" Icon={FaUserCheck} />
+          )}
           <SidebarItem to="/customercare" label="Customer Care" Icon={FaHeadset} />
           <SidebarItem to="/affiliates" label="Affiliates" Icon={FaUsers} />
           <SidebarItem to="/settings" label="Settings" Icon={FaCogs} />

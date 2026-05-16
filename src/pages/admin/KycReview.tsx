@@ -24,10 +24,12 @@ const KycReview: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<"Pending" | "Approved" | "Rejected" | "all">("all");
   const [selectedKyc, setSelectedKyc] = useState<KycSubmission | null>(null);
   const [loading, setLoading] = useState(false);
+  const [kycError, setKycError] = useState(false);
 
   // Fetch submissions from API
   const fetchKycSubmissions = async () => {
     setLoading(true);
+    setKycError(false);
     try {
       const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
@@ -39,9 +41,11 @@ const KycReview: React.FC = () => {
         setKycSubmissions(data.data);
       } else {
         console.error("Failed to fetch KYC:", data.message);
+        setKycError(true);
       }
     } catch (err) {
       console.error("Error fetching KYC submissions:", err);
+      setKycError(true);
     }
     setLoading(false);
   };
