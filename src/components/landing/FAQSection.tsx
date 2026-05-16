@@ -1,8 +1,5 @@
-import TopBar from '@/components/dashboard/TopBar';
-import { useState } from "react";
-import { FaBars, FaChevronDown, FaChevronUp } from "react-icons/fa";
-import Sidebar from "./dashboardWidgets/Sidebar";
-import Footer from "@/components/landing/Footer";
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface QA {
   question: string;
@@ -33,59 +30,57 @@ const cryptoQAs: QA[] = [
   { question: "What is a blockchain node?", answer: "A node is a computer that participates in the blockchain network, validating transactions." },
 ];
 
-const CryptoFAQ: React.FC = () => {
+const FAQSection: React.FC = () => {
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-[#0f111b]">
-      {/* Sidebar */}
-     <div
-        className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#020617] shadow-lg z-50 transform transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
-      >
-        <Sidebar onClose={() => setSidebarOpen(false)} />
-      </div>
-      {/* Main Content */}
-      {/* Main Content */}
-<div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
-  {/* Top Bar */}
-  <TopBar title="FAQs" onSidebarToggle={() => setSidebarOpen(true)} />
-
-  {/* Page Content */}
-  <div className="p-6 space-y-6 mt-16">
-    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">Frequently Asked Questions</h2>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {cryptoQAs.map((qa, idx) => (
-        <div key={idx} className="bg-white dark:bg-[#0a1120] rounded-2xl shadow-lg p-4">
-          <button
-            onClick={() => setExpanded(expanded === idx ? null : idx)}
-            className="w-full flex justify-between items-center text-lg md:text-xl font-semibold text-gray-900 dark:text-white hover:text-teal-400 transition"
-          >
-            {qa.question}
-            {expanded === idx ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
-          {expanded === idx && (
-            <div className="mt-3 text-gray-700 dark:text-gray-300 text-sm md:text-base">
-              {qa.answer}
-            </div>
-          )}
+    <section className="py-20 bg-[#0d1421]" id="faq">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-gray-400">
+            Find answers to common questions about BlueVult and cryptocurrency.
+          </p>
         </div>
-      ))}
-    </div>
 
-    <p className="mt-6 text-gray-600 dark:text-gray-400 text-sm md:text-base">
-      Disclaimer: The information provided here is for educational purposes. Trading cryptocurrencies carries risk and may result in losses.
-    </p>
-  </div>
+        <div className="space-y-4">
+          {cryptoQAs.map((qa, idx) => (
+            <div
+              key={idx}
+              className="bg-[#17212d] border border-[#1a2535] rounded-2xl overflow-hidden transition-all duration-300"
+            >
+              <button
+                onClick={() => setExpanded(expanded === idx ? null : idx)}
+                className="w-full flex justify-between items-center p-5 text-left text-lg font-semibold text-white hover:text-[#3861fb] transition-colors"
+              >
+                {qa.question}
+                {expanded === idx ? (
+                  <ChevronUp className="w-5 h-5 text-[#3861fb]" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+              <div
+                className={`overflow-hidden transition-all duration-300 ${
+                  expanded === idx ? "max-h-96 pb-5 px-5" : "max-h-0"
+                }`}
+              >
+                <p className="text-gray-400 text-sm md:text-base leading-relaxed">
+                  {qa.answer}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-  <div className="p-6 space-y-6">
-    <Footer />
-  </div>
-</div>
-    </div>
+        <p className="mt-12 text-center text-gray-500 text-xs md:text-sm">
+          Disclaimer: The information provided here is for educational purposes. Trading cryptocurrencies carries risk and may result in losses.
+        </p>
+      </div>
+    </section>
   );
 };
 
-export default CryptoFAQ;
+export default FAQSection;

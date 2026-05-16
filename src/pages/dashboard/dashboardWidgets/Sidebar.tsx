@@ -213,7 +213,6 @@ useEffect(() => {
           </div>
 
           <SidebarItem to="/kyc_verify" label="KYC" Icon={FaUserCheck} />
-          <SidebarItem to="/faqs" label="Q&A" Icon={FaQuestionCircle} />
           <SidebarItem to="/customercare" label="Customer Care" Icon={FaHeadset} />
           <SidebarItem to="/affiliates" label="Affiliates" Icon={FaUsers} />
           <SidebarItem to="/settings" label="Settings" Icon={FaCogs} />
