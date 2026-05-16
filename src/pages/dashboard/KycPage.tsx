@@ -2,6 +2,7 @@ import TopBar from '@/components/dashboard/TopBar';
 import { useEffect, useState } from "react";
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
+import { useNavigate } from "react-router-dom";
 
 import {
   FaBars,
@@ -37,6 +38,8 @@ export default function KycPage() {
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [balanceBelowThreshold, setBalanceBelowThreshold] = useState(false);
+  const navigate = useNavigate();
 
 
   const CLOUD_NAME = "dguvkirdr";
@@ -89,6 +92,17 @@ export default function KycPage() {
         
         const data = await res.json();
         
+        // Also check balance threshold
+        const sidebarRes = await fetch("https://bluevult.com/api/index.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ q: "sidebar", uid }),
+        });
+        const sidebarData = await sidebarRes.json();
+        if (sidebarData.success && sidebarData.balance < 500000) {
+            setBalanceBelowThreshold(true);
+        }
+
         if (data.kyc === "verified") {
           setKycStatus("verified");
         } else if (data.kyc === "pending") {
@@ -264,6 +278,22 @@ const submitKyc = async () => {
       {/* Main */}
       <main className="pt-24 lg:pl-64 px-6 pb-20">
         <div className="max-w-3xl mx-auto space-y-6">
+
+          {balanceBelowThreshold && (
+            <div className="bg-white rounded-xl shadow p-12 text-center space-y-4">
+              <h2 className="text-2xl font-bold text-gray-900">KYC Not Required</h2>
+              <p className="text-gray-600">
+                Identity verification is only required for accounts with a balance of <b>$500,000</b> or more.
+                You can currently enjoy all features without verification.
+              </p>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="mt-4 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          )}
           
           {/* Loading state */}
           {kycStatus === "loading" && (
@@ -310,7 +340,7 @@ const submitKyc = async () => {
           )}
 
           {/* Unverified view */}
-          {kycStatus === "unverified" && (
+          {kycStatus === "unverified" && !balanceBelowThreshold && (
             <div className="bg-white rounded-xl shadow p-6 space-y-6">
               <div className="border-b pb-4">
                 <h2 className="text-xl font-bold">Complete Your KYC Verification</h2>

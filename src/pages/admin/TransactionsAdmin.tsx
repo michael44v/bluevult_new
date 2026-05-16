@@ -25,6 +25,7 @@ const TransactionsAdmin: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [editingDate, setEditingDate] = useState<string>("");
 
   // Fetch transactions from API
   const fetchTransactions = async () => {
@@ -198,7 +199,10 @@ const TransactionsAdmin: React.FC = () => {
                   </td>
                   <td className="px-6 py-3">{tx.date}</td>
                   <td className="px-6 py-3">
-                    <button onClick={() => setSelectedTx(tx)}>
+                    <button onClick={() => {
+                        setSelectedTx(tx);
+                        setEditingDate(tx.date);
+                    }}>
                       <FaEye className="text-blue-400" />
                     </button>
                   </td>
@@ -227,8 +231,45 @@ const TransactionsAdmin: React.FC = () => {
                 <div className="flex justify-between"><span className="font-semibold">Amount:</span> <span>${selectedTx.amount} ({selectedTx.currency} BTC)</span></div>
                 <div className="flex justify-between"><span className="font-semibold">Wallet:</span> <span>{selectedTx.wallet}</span></div>
                 <div className="flex justify-between"><span className="font-semibold">Status:</span> <span className={`px-2 py-1 rounded ${getStatusBadge(selectedTx.status)}`}>{selectedTx.status}</span></div>
-                <div className="flex justify-between"><span className="font-semibold">Date:</span> <span>{selectedTx.date}</span></div>
-
+                <div className="flex flex-col gap-1">
+                    <span className="font-semibold">Date:</span>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={editingDate}
+                            onChange={(e) => setEditingDate(e.target.value)}
+                            className="flex-1 bg-[#0f111b] border border-gray-700 rounded px-2 py-1 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch("https://bluevult.com/api/admin-api.php", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            q: "update_tx_date",
+                                            txn_id: selectedTx.id,
+                                            new_date: editingDate
+                                        }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                        alert("Date updated successfully");
+                                        fetchTransactions();
+                                    } else {
+                                        alert("Failed to update date: " + data.message);
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    alert("Error updating date");
+                                }
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition"
+                        >
+                            Update
+                        </button>
+                    </div>
+                </div>
               </div>
 
               {selectedTx.status.toLowerCase() === "pending" && (

@@ -223,6 +223,26 @@ echo json_encode([
         echo json_encode(['success' => $stmt->affected_rows > 0]);
         break;
 
+    case 'update_tx_date':
+        $txnId = intval($input['txn_id'] ?? 0);
+        $newDate = $input['new_date'] ?? '';
+
+        if (!$txnId || !$newDate) {
+            echo json_encode(["success" => false, "message" => "Invalid transaction ID or date"]);
+            exit();
+        }
+
+        $stmt = $db->prepare("UPDATE user_transactions SET trans_time = ? WHERE trans_id = ?");
+        $stmt->bind_param("si", $newDate, $txnId);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Transaction date updated successfully"]);
+        } else {
+            echo json_encode(["success" => false, "message" => "Failed to update date: " . $stmt->error]);
+        }
+        $stmt->close();
+        break;
+
     /* =====================
        TRANSACTIONS
     ===================== */

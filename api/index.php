@@ -206,7 +206,12 @@ $stmt->close();
         break;
         case "sidebar":
                  $get_user = sanitizeInput($input['uid'] ?? '');
-                  $check = "SELECT * FROM user_details WHERE user_id='$get_user' ";
+                  $check = "
+                    SELECT u.user_name, u.user_email, u.user_picture, u.user_status, COALESCE(b.user_balance, 0) as balance
+                    FROM user_details u
+                    LEFT JOIN user_balances b ON u.user_id = b.user_id
+                    WHERE u.user_id='$get_user'
+                  ";
 
                 $result = mysqli_query($conn, $check);
                 if (mysqli_num_rows($result) > 0) {
@@ -223,6 +228,7 @@ $stmt->close();
                             'user_email' => $user_email,
                             'profile' => $dp,
                             'user_status' => $read['user_status'],
+                            'balance' => (float)$read['balance'],
                         ]);
 
                            
