@@ -16,6 +16,10 @@ import CustomerCarePage from './pages/dashboard/CustomerCarePage';
 import UserProfile from './pages/dashboard/settings';
 import ReferralPage from './pages/dashboard/Affiliates';
 import Community from './pages/Community';
+import Cryptocurrencies from './pages/Cryptocurrencies';
+import Exchanges from './pages/Exchanges';
+import Products from './pages/Products';
+import Learn from './pages/Learn';
 
  
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -71,6 +75,10 @@ root.render(
                <Route path="/referral/:id" element={<About />} />
                  <Route path="/forgot-password" element={<ForgotPassword />} />
                  <Route path="/community" element={<Community />} />
+                 <Route path="/cryptocurrencies" element={<Cryptocurrencies />} />
+                 <Route path="/exchanges" element={<Exchanges />} />
+                 <Route path="/products" element={<Products />} />
+                 <Route path="/learn" element={<Learn />} />
 
              
           <Route path="/admin" element={<AdminDashboard />} />

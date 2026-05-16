@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   FaChartPie,
   FaUsers,
+  FaEnvelope,
   FaIdCard,
   FaExchangeAlt,
   FaWallet,
