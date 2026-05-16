@@ -64,11 +64,11 @@ export default function Header(): JSX.Element {
   const tickerRef = useRef<HTMLDivElement>(null);
 
   const navLinks: NavLink[] = [
-    { name: "Cryptocurrencies", href: "#", hasDropdown: true },
-    { name: "Exchanges", href: "#", hasDropdown: true },
+    { name: "Cryptocurrencies", href: "/cryptocurrencies", hasDropdown: true },
+    { name: "Exchanges", href: "/exchanges", hasDropdown: true },
     { name: "Community", href: "/community" },
-    { name: "Products", href: "#", hasDropdown: true },
-    { name: "Learn", href: "#", hasDropdown: true },
+    { name: "Products", href: "/products", hasDropdown: true },
+    { name: "Learn", href: "/learn", hasDropdown: true },
   ];
 
   /* Fetch ticker coins */
