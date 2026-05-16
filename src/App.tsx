@@ -16,6 +16,8 @@ import CustomerCarePage from "./pages/dashboard/CustomerCarePage";
 import Affiliates from "./pages/dashboard/Affiliates";
 import Settings from "./pages/dashboard/settings";
 import ConnectWalletPage from "./pages/dashboard/ConnectWalletPage";
+import TradingPage from "./pages/dashboard/TradingPage";
+import PositionsPage from "./pages/dashboard/PositionsPage";
 import SignIn from "./pages/auth/signIn";
 import SignUp from "./pages/auth/SignUp";
 
@@ -49,6 +51,8 @@ const App = () => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/connect_wallet" element={<ConnectWalletPage />} />
             <Route path="/wallets/deposit" element={<WalletPage />} />
+            <Route path="/trade" element={<TradingPage />} />
+            <Route path="/positions" element={<PositionsPage />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

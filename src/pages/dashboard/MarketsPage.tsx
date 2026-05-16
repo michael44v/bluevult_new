@@ -5,6 +5,7 @@ import { SiBitcoin, SiEthereum, SiSolana } from "react-icons/si";
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
+import { ASSET_DEFS as ASSET_BASE_DEFS } from "@/constants/assets";
 
 // ------------------------
 // Types
@@ -28,57 +29,6 @@ interface Asset {
   high24h?: string;
   low24h?: string;
 }
-
-// ------------------------
-// Static asset definitions
-// ------------------------
-const ASSET_DEFS: Omit<Asset, "price" | "rawPrice" | "change" | "changeRaw" | "icon" | "flash" | "marketCap" | "volume24h" | "high24h" | "low24h">[] = [
-  {
-    id: "BTC",
-    name: "Bitcoin",
-    type: "Crypto",
-    symbol: "BTC",
-    binanceSymbol: "btcusdt",
-    coingeckoId: "bitcoin",
-    description: "The world's first decentralized cryptocurrency, the original store of digital value.",
-  },
-  {
-    id: "ETH",
-    name: "Ethereum",
-    type: "Crypto",
-    symbol: "ETH",
-    binanceSymbol: "ethusdt",
-    coingeckoId: "ethereum",
-    description: "Decentralized platform powering smart contracts, DeFi, and the NFT ecosystem.",
-  },
-  {
-    id: "SOL",
-    name: "Solana",
-    type: "Crypto",
-    symbol: "SOL",
-    binanceSymbol: "solusdt",
-    coingeckoId: "solana",
-    description: "High-performance blockchain offering fast, low-cost transactions and a thriving DeFi ecosystem.",
-  },
-  {
-    id: "AAPL",
-    name: "Apple Inc.",
-    type: "Stock",
-    symbol: "AAPL",
-    binanceSymbol: null,
-    coingeckoId: null,
-    description: "Leading technology company in consumer electronics, software, and digital services.",
-  },
-  {
-    id: "TSLA",
-    name: "Tesla",
-    type: "Stock",
-    symbol: "TSLA",
-    binanceSymbol: null,
-    coingeckoId: null,
-    description: "Electric vehicle and clean energy company revolutionizing sustainable transport.",
-  },
-];
 
 const COINGECKO_IDS = "bitcoin,ethereum,solana";
 
@@ -179,7 +129,7 @@ const MarketsPage: React.FC = () => {
   // Seed from CoinGecko
   // ------------------------
   useEffect(() => {
-    const seed = ASSET_DEFS.map(def => ({
+    const seed = ASSET_BASE_DEFS.map(def => ({
       ...def,
       price: "Loading...",
       rawPrice: 0,
@@ -216,13 +166,18 @@ const MarketsPage: React.FC = () => {
       })
       .catch(console.error);
 
-    // Seed stocks with static prices (no free real-time stock API)
+    // Seed stocks with static prices
     setAssets(prev =>
       prev.map(asset => {
         if (asset.type !== "Stock") return asset;
         const staticPrices: Record<string, { price: number; change: number }> = {
           AAPL: { price: 189.3, change: 0.72 },
           TSLA: { price: 177.8, change: -1.15 },
+          NVDA: { price: 875.2, change: 1.25 },
+          MSFT: { price: 415.5, change: 0.45 },
+          AMZN: { price: 178.2, change: -0.32 },
+          GOOGL: { price: 154.1, change: 0.88 },
+          META: { price: 505.1, change: 1.12 },
         };
         const s = staticPrices[asset.symbol];
         if (!s) return asset;
@@ -274,7 +229,7 @@ const MarketsPage: React.FC = () => {
     });
   }, []);
 
-  const binanceSymbols = ASSET_DEFS.filter(a => a.binanceSymbol).map(a => a.binanceSymbol!);
+  const binanceSymbols = ASSET_BASE_DEFS.filter(a => a.type === "Crypto" && a.binanceSymbol).map(a => a.binanceSymbol!);
   const wsConnected = useBinanceLivePrices(binanceSymbols, handleTick);
 
   const displayed = filter === "All" ? assets : assets.filter(a => a.type === filter);
@@ -416,9 +371,9 @@ const MarketsPage: React.FC = () => {
                     )}
                   </div>
 
-                  <Link to="/wallets/deposit">
+                  <Link to={`/trade?asset=${asset.symbol}`}>
                     <button className="w-full mt-1 px-4 py-2.5 bg-[#00C4B4] text-white rounded-xl hover:bg-teal-500 active:scale-95 transition font-semibold text-sm">
-                      Invest Now
+                      Trade Now
                     </button>
                   </Link>
                 </div>
@@ -490,9 +445,9 @@ const MarketsPage: React.FC = () => {
                         {asset.marketCap ?? "—"}
                       </td>
                       <td className="p-3">
-                        <Link to="/wallets/deposit">
+                        <Link to={`/trade?asset=${asset.symbol}`}>
                           <button className="px-3 py-1.5 bg-[#00C4B4] text-white rounded-lg hover:bg-teal-500 transition text-xs font-semibold active:scale-95">
-                            Invest
+                            Trade
                           </button>
                         </Link>
                       </td>
