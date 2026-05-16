@@ -649,85 +649,201 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
             break;
 
         case "settings":
-    // Get the JSON input
-    $input = json_decode(file_get_contents("php://input"), true);
+        // Get the JSON input
+        $input = json_decode(file_get_contents("php://input"), true);
 
-    $user_id = $input['user_id'] ?? null;
-    $name = $input['name'] ?? null;
-    $profile_pic = $input['profile_pic'] ?? null;
-    $current_password = $input['current_password'] ?? null;
-    $new_password = $input['new_password'] ?? null;
+        $user_id = $input['user_id'] ?? null;
+        $name = $input['name'] ?? null;
+        $profile_pic = $input['profile_pic'] ?? null;
+        $current_password = $input['current_password'] ?? null;
+        $new_password = $input['new_password'] ?? null;
 
-    if (!$user_id) {
-        echo json_encode(['success' => false, 'message' => 'User ID missing']);
-        exit();
-    }
-
-    // Fetch user data
-    $stmt = $conn->prepare("SELECT user_password, user_picture FROM user_details WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows === 0) {
-        echo json_encode(['success' => false, 'message' => 'User not found']);
-        exit();
-    }
-
-    $user = $result->fetch_assoc();
-    $updates = [];
-    $types = "";
-    $params = [];
-
-    // Handle profile picture update
-    if (!empty($profile_pic)) {
-        $updates[] = "user_picture = ?";
-        $types .= "s";
-        $params[] = $profile_pic;
-    }
-
-    // Handle password update
-   if (!empty($current_password) && !empty($new_password)) {
-
-
-        if ($current_password === $user['user_password']) {
-            $updates[] = "user_password = ?";
-            $types .= "s";
-            $params[] = $new_password; // still plain text
-        } else {
-                echo json_encode([
-                'success' => false,
-                'message' => 'Incorrect current password'
-                ]);
-                exit();
-            }
-         }
-
-    // Update name if provided
-    if (!empty($name)) {
-        $updates[] = "user_name = ?";
-        $types .= "s";
-        $params[] = $name;
-    }
-
-    if (!empty($updates)) {
-        $sql = "UPDATE user_details SET " . implode(", ", $updates) . " WHERE user_id = ?";
-        $types .= "i";
-        $params[] = $user_id;
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
-            echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to update profile']);
+        if (!$user_id) {
+            echo json_encode(['success' => false, 'message' => 'User ID missing']);
+            exit();
         }
-    } else {
-        echo json_encode(['success' => false, 'message' => 'No changes detected']);
-    }
-    break;
-        default:
+
+        // Fetch user data
+        $stmt = $conn->prepare("SELECT user_password, user_picture FROM user_details WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            echo json_encode(['success' => false, 'message' => 'User not found']);
+            exit();
+        }
+
+        $user = $result->fetch_assoc();
+        $updates = [];
+        $types = "";
+        $params = [];
+
+        // Handle profile picture update
+        if (!empty($profile_pic)) {
+            $updates[] = "user_picture = ?";
+            $types .= "s";
+            $params[] = $profile_pic;
+        }
+
+        // Handle password update
+       if (!empty($current_password) && !empty($new_password)) {
+
+
+            if ($current_password === $user['user_password']) {
+                $updates[] = "user_password = ?";
+                $types .= "s";
+                $params[] = $new_password; // still plain text
+            } else {
+                    echo json_encode([
+                    'success' => false,
+                    'message' => 'Incorrect current password'
+                    ]);
+                    exit();
+                }
+             }
+
+        // Update name if provided
+        if (!empty($name)) {
+            $updates[] = "user_name = ?";
+            $types .= "s";
+            $params[] = $name;
+        }
+
+        if (!empty($updates)) {
+            $sql = "UPDATE user_details SET " . implode(", ", $updates) . " WHERE user_id = ?";
+            $types .= "i";
+            $params[] = $user_id;
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to update profile']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'No changes detected']);
+        }
+        break;
+
+    case 'open_position':
+        $uid = intval($input['uid'] ?? 0);
+        $asset = sanitizeInput($input['asset'] ?? '');
+        $side = sanitizeInput($input['side'] ?? 'long');
+        $leverage = intval($input['leverage'] ?? 1);
+        $margin = floatval($input['margin'] ?? 0);
+        $entry_price = floatval($input['entry_price'] ?? 0);
+        $size = ($margin * $leverage);
+
+        if ($uid <= 0 || !$asset || $margin <= 0 || $entry_price <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+            exit();
+        }
+
+        $stmt = $conn->prepare("SELECT user_balance FROM user_balances WHERE user_id = ?");
+        $stmt->bind_param("i", $uid);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+
+        if (!$res || $res['user_balance'] < $margin) {
+            echo json_encode(['success' => false, 'message' => 'Insufficient balance for margin']);
+            exit();
+        }
+
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("UPDATE user_balances SET user_balance = user_balance - ? WHERE user_id = ?");
+            $stmt->bind_param("di", $margin, $uid);
+            $stmt->execute();
+
+            $stmt = $conn->prepare("INSERT INTO user_positions (user_id, asset_symbol, side, leverage, margin, size, entry_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'open')");
+            $stmt->bind_param("issiddd", $uid, $asset, $side, $leverage, $margin, $size, $entry_price);
+            $stmt->execute();
+
+            $conn->commit();
+            echo json_encode(['success' => true, 'message' => 'Position opened successfully']);
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(['success' => false, 'message' => 'Failed to open position: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'close_position':
+        $pid = intval($input['pid'] ?? 0);
+        $uid = intval($input['uid'] ?? 0);
+        $close_price = floatval($input['close_price'] ?? 0);
+
+        if ($pid <= 0 || $uid <= 0 || $close_price <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+            exit();
+        }
+
+        $stmt = $conn->prepare("SELECT * FROM user_positions WHERE position_id = ? AND user_id = ? AND status = 'open'");
+        $stmt->bind_param("ii", $pid, $uid);
+        $stmt->execute();
+        $pos = $stmt->get_result()->fetch_assoc();
+
+        if (!$pos) {
+            echo json_encode(['success' => false, 'message' => 'Position not found or already closed']);
+            exit();
+        }
+
+        $entry = floatval($pos['entry_price']);
+        $size = floatval($pos['size']);
+        $margin = floatval($pos['margin']);
+        $side = $pos['side'];
+
+        if ($side == 'long') {
+            $pnl = ($close_price - $entry) * ($size / $entry);
+        } else {
+            $pnl = ($entry - $close_price) * ($size / $entry);
+        }
+
+        $return_amt = $margin + $pnl;
+
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("UPDATE user_balances SET user_balance = user_balance + ? WHERE user_id = ?");
+            $stmt->bind_param("di", $return_amt, $uid);
+            $stmt->execute();
+
+            $stmt = $conn->prepare("UPDATE user_positions SET status = 'closed', close_price = ?, pnl = ?, closed_at = NOW() WHERE position_id = ?");
+            $stmt->bind_param("ddi", $close_price, $pnl, $pid);
+            $stmt->execute();
+
+            $conn->commit();
+            echo json_encode(['success' => true, 'message' => 'Position closed', 'pnl' => $pnl]);
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(['success' => false, 'message' => 'Failed to close position: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'get_positions':
+        $uid = intval($input['uid'] ?? 0);
+        $status = sanitizeInput($input['status'] ?? 'open');
+
+        if ($uid <= 0) {
+            echo json_encode(['success' => false, 'positions' => []]);
+            exit();
+        }
+
+        $stmt = $conn->prepare("SELECT * FROM user_positions WHERE user_id = ? AND status = ? ORDER BY created_at DESC");
+        $stmt->bind_param("is", $uid, $status);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        $positions = [];
+        while ($row = $res->fetch_assoc()) {
+            $positions[] = $row;
+        }
+
+        echo json_encode(['success' => true, 'positions' => $positions]);
+        break;
+
+    default:
         echo json_encode(['success' => $req, 'message' => 'Invalid request']);
         break;
 }

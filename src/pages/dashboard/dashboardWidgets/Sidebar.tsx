@@ -169,6 +169,7 @@ useEffect(() => {
         <nav className="space-y-1 flex-1">
           <SidebarItem to="/dashboard" label="Dashboard" Icon={FaChartPie} />
           <SidebarItem to="/markets" label="Markets" Icon={FaChartLine} />
+          <SidebarItem to="/positions" label="My Positions" Icon={FaCoins} />
           <SidebarItem to="/history" label="Transaction History" Icon={FaCoins} />
 
           {/* Banking / Wallets Dropdown */}
