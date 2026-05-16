@@ -66,7 +66,7 @@ export default function Header(): JSX.Element {
   const navLinks: NavLink[] = [
     { name: "Cryptocurrencies", href: "#", hasDropdown: true },
     { name: "Exchanges", href: "#", hasDropdown: true },
-    { name: "Community", href: "#" },
+    { name: "Community", href: "/community" },
     { name: "Products", href: "#", hasDropdown: true },
     { name: "Learn", href: "#", hasDropdown: true },
   ];
@@ -176,9 +176,9 @@ export default function Header(): JSX.Element {
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-0.5">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
-                href={link.href}
+                to={link.href}
                 className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{ color: "#8a919e" }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = "#eaecef"; e.currentTarget.style.background = "#1e2d3d"; }}
@@ -186,7 +186,7 @@ export default function Header(): JSX.Element {
               >
                 {link.name}
                 {link.hasDropdown && <ChevronDown className="w-3 h-3" />}
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -299,16 +299,16 @@ export default function Header(): JSX.Element {
 
             <nav className="flex flex-col px-4 py-2">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.name}
-                  href={link.href}
+                  to={link.href}
                   className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium"
                   style={{ color: "#8a919e" }}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.name}
                   {link.hasDropdown && <ChevronDown className="w-3 h-3" />}
-                </a>
+                </Link>
               ))}
             </nav>
 

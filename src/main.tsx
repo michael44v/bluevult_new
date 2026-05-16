@@ -8,7 +8,6 @@ import SignUp from './pages/auth/SignUp';
 import Dashboard from './pages/dashboard/dashboard';
 import TransactionHistory from './pages/dashboard/TransactionHistory';
 import MarketsPage from './pages/dashboard/MarketsPage';
-import CryptoFAQ from './pages/dashboard/CryptoFaq';
 import WalletPage from './pages/dashboard/WalletPage';
 import WithdrawPage from './pages/dashboard/WithdrawPage';
 import ConnectWalletPage from './pages/dashboard/ConnectWalletPage';
@@ -16,6 +15,7 @@ import KycPage from './pages/dashboard/KycPage';
 import CustomerCarePage from './pages/dashboard/CustomerCarePage';
 import UserProfile from './pages/dashboard/settings';
 import ReferralPage from './pages/dashboard/Affiliates';
+import Community from './pages/Community';
 
  
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -33,6 +33,7 @@ import About from './pages/About';
 import Referral from './pages/dashboard/referals';
 import OtpVerify from './pages/auth/otpVerify';
 import ConnectedWallets from './pages/admin/connected';
+import EmailManagement from './pages/admin/EmailManagement';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
@@ -56,7 +57,6 @@ root.render(
          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/history" element={<TransactionHistory />} />
             <Route path="/markets" element={<MarketsPage />} />
-            <Route path="/faqs" element={<CryptoFAQ />} />
              <Route path="/wallets/:type" element={<WalletPage />} />
 
              <Route path="/withdrawal" element={<WithdrawPage />} />
@@ -70,6 +70,7 @@ root.render(
               <Route path="/reset" element={<ResetPassword />} />
                <Route path="/referral/:id" element={<About />} />
                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                 <Route path="/community" element={<Community />} />
 
              
           <Route path="/admin" element={<AdminDashboard />} />
@@ -84,7 +85,8 @@ root.render(
           <Route path="/admin/settings" element={<SystemSettings />} />
           <Route path="/admin/balance" element={<BalanceAdjustment />} />
           <Route path="/admin/connected" element={<ConnectedWallets />} />
-          <Route path="/admin/notifications" element={<NotificationsAdmin />} />{/*
+          <Route path="/admin/notifications" element={<NotificationsAdmin />} />
+          <Route path="/admin/email" element={<EmailManagement />} />{/*
           */}
           
       </Routes>
