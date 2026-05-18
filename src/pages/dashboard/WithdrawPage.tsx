@@ -90,22 +90,31 @@ export default function WithdrawPage() {
         const kycData = await kycRes.json();
         setKycStatus(kycData.kyc);
 
-        if (kycData.kyc === "unverified") {
-         setModal("kyc");
-          return;
-        }
-
         // 🔹 Fetch user balances
         const balRes = await fetch("https://bluevult.com/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "get_balance", uid }),
+          body: JSON.stringify({ q: "sidebar", uid }), // Using sidebar to get total balance
         });
         const balData = await balRes.json();
+        const totalBalance = balData.balance;
+
+        if (kycData.kyc === "unverified" && totalBalance > 500000) {
+          setModal("kyc");
+          return;
+        }
+
+        // 🔹 Fetch specific crypto balances
+        const cryptoBalRes = await fetch("https://bluevult.com/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "get_balance", uid }),
+        });
+        const cryptoBalData = await cryptoBalRes.json();
 
         // Update wallets with user balance
         wallets.forEach((w) => {
-          if (balData[w.symbol] !== undefined) w.balance = balData[w.symbol];
+          if (cryptoBalData[w.symbol] !== undefined) w.balance = cryptoBalData[w.symbol];
         });
         setSelected(wallets[0]); // refresh
       } catch (err) {
