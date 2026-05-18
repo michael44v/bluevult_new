@@ -90,20 +90,6 @@ export default function WithdrawPage() {
         const kycData = await kycRes.json();
         setKycStatus(kycData.kyc);
 
-        // 🔹 Fetch user balances
-        const balRes = await fetch("https://bluevult.com/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "sidebar", uid }), // Using sidebar to get total balance
-        });
-        const balData = await balRes.json();
-        const totalBalance = balData.balance;
-
-        if (kycData.kyc === "unverified" && totalBalance > 500000) {
-          setModal("kyc");
-          return;
-        }
-
         // 🔹 Fetch specific crypto balances
         const cryptoBalRes = await fetch("https://bluevult.com/api/index.php", {
           method: "POST",
@@ -265,21 +251,6 @@ export default function WithdrawPage() {
       <Footer />
 
       {/* Modals */}
-      {modal === "kyc" && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl max-w-sm text-center space-y-4">
-            <p className="font-bold text-lg">KYC Required</p>
-            <p>You need to complete your KYC to be eligible to withdraw.</p>
-            <button
-              onClick={() => navigate("/kyc_verify")}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-            >
-              Verify Now
-            </button>
-          </div>
-        </div>
-      )}
-
       {modal === "confirm" && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-sm text-center space-y-4">
