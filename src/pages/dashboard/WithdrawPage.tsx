@@ -91,7 +91,7 @@ export default function WithdrawPage() {
         setKycStatus(kycData.kyc);
 
         if (kycData.kyc === "unverified") {
-          setModal("kyc");
+         setModal("kyc");
           return;
         }
 

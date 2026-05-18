@@ -88,7 +88,7 @@ style={{ height: "500px", width: "100%" }}
 </div>
 </div>
 
-  {/* ===== ACTION BUTTONS ===== */}
+  {/* ===== ACTION BUTTONS ===== 
   <div className="grid grid-cols-2 gap-4 mt-6">
     <button
       className="w-full py-3 rounded-xl font-semibold text-white
@@ -105,7 +105,7 @@ style={{ height: "500px", width: "100%" }}
     >
       Sell
     </button>
-  </div>
+  </div>*/}
 
   {/* ===== FOOTER ===== */}
   <p className="text-xs text-gray-400 text-center mt-4">

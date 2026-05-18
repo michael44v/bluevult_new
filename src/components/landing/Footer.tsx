@@ -52,7 +52,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">
+              <span className="text-xl font-bold " style={{ color:"black"}}>
                 Blue<span className="text-primary">Vult</span>
               </span>
             </a>
@@ -102,7 +102,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Copyright */}
             <p className="text-sm text-muted-foreground">
-              © 2024 CryptoVault. All rights reserved.
+              © 2013 BlueVult. All rights reserved.
             </p>
 
             {/* Social Links */}
@@ -123,7 +123,7 @@ const Footer = () => {
           {/* Disclaimer */}
           <p className="text-xs text-muted-foreground mt-6 text-center">
             Cryptocurrency investments are subject to market risks. Past performance is not indicative of future results.
-            Please invest responsibly and only what you can afford to lose. CryptoVault is licensed and regulated.
+            Please invest responsibly and only what you can afford to lose.  BluVult is licensed and regulated.
           </p>
         </div>
       </div>
