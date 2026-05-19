@@ -30,49 +30,51 @@ const queryClient = new QueryClient();
 
 import { useSystemSettings } from "./hooks/useAdminData";
 
-const App = () => {
-  useDarkMode();
+const AppContent = () => {
   const { data: settings = [] } = useSystemSettings();
   const isMaintenanceMode = Array.isArray(settings) && settings.find(s => s.setting_key === "maintenance_mode")?.setting_value === "true";
 
   if (isMaintenanceMode) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <Maintenance />
-      </QueryClientProvider>
-    );
+    return <Maintenance />;
   }
 
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/history" element={<TransactionHistory />} />
+        <Route path="/markets" element={<MarketsPage />} />
+        <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/withdrawal" element={<WithdrawPage />} />
+        <Route path="/kyc_verify" element={<KycPage />} />
+        <Route path="/faqs" element={<CryptoFAQ />} />
+        <Route path="/customercare" element={<CustomerCarePage />} />
+        <Route path="/affiliates" element={<Affiliates />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/connect_wallet" element={<ConnectWalletPage />} />
+        <Route path="/wallets/deposit" element={<WalletPage />} />
+        <Route path="/trade" element={<TradingPage />} />
+        <Route path="/positions" element={<PositionsPage />} />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <ChatBot />
+      <BottomNav />
+    </BrowserRouter>
+  );
+};
+
+const App = () => {
+  useDarkMode();
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/history" element={<TransactionHistory />} />
-            <Route path="/markets" element={<MarketsPage />} />
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/withdrawal" element={<WithdrawPage />} />
-            <Route path="/kyc_verify" element={<KycPage />} />
-            <Route path="/faqs" element={<CryptoFAQ />} />
-            <Route path="/customercare" element={<CustomerCarePage />} />
-            <Route path="/affiliates" element={<Affiliates />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/connect_wallet" element={<ConnectWalletPage />} />
-            <Route path="/wallets/deposit" element={<WalletPage />} />
-            <Route path="/trade" element={<TradingPage />} />
-            <Route path="/positions" element={<PositionsPage />} />
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <ChatBot />
-          <BottomNav />
-        </BrowserRouter>
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );
