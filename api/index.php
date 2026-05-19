@@ -648,6 +648,16 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
             }
             break;
 
+        case "clear_notifications":
+            $uid = intval($input['uid'] ?? 0);
+            if ($uid) {
+                $conn->query("DELETE FROM user_notifications WHERE user_id = $uid");
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'User ID missing']);
+            }
+            break;
+
         case "settings":
         // Get the JSON input
         $input = json_decode(file_get_contents("php://input"), true);
