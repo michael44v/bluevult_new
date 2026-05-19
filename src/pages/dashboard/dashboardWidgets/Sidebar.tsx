@@ -20,6 +20,7 @@ import {
 import { setWithExpiry } from "../killer";
 
 import LoggedOutModal from "@/pages/auth/LoggedOutModal";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface SidebarItemProps {
   to: string;
@@ -35,6 +36,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
 
   const [walletsOpen, setWalletsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -130,7 +133,7 @@ useEffect(() => {
     <aside className="w-64 min-h-screen p-4 bg-gray-50 dark:bg-[#020617] border-r flex flex-col gap-4">
       <LoggedOutModal open={showModal} onConfirm={handleConfirm} />
 
-      <h1 className="text-xl font-bold px-2 text-gray-900 dark:text-white">BlueVult</h1>
+      <h1 className="text-xl font-bold px-2 text-gray-900 dark:text-white">{platformName}</h1>
 
       {/* ===== User Profile ===== */}
       <div className="bg-white dark:bg-[#0a1120] rounded-2xl p-4 shadow">
@@ -216,9 +219,7 @@ useEffect(() => {
             )}
           </div>
 
-          {userBalance >= 500000 && (
-            <SidebarItem to="/kyc_verify" label="KYC" Icon={FaUserCheck} />
-          )}
+          <SidebarItem to="/kyc_verify" label="KYC" Icon={FaUserCheck} />
           <SidebarItem to="/customercare" label="Customer Care" Icon={FaHeadset} />
           <SidebarItem to="/affiliates" label="Affiliates" Icon={FaUsers} />
           <SidebarItem to="/settings" label="Settings" Icon={FaCogs} />

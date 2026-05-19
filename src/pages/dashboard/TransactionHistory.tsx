@@ -113,11 +113,13 @@ const TransactionHistory: React.FC = () => {
                   <span className="font-semibold text-gray-900 dark:text-white">{txn.type}</span>
                   <span
                     className={`font-bold ${
-                      txn.status === "Completed"
+                      txn.status === "Completed" || txn.status === "approved"
                         ? "text-green-500"
-                        : txn.status === "Pending"
+                        : txn.status === "Pending" || txn.status === "pending"
                         ? "text-yellow-400"
-                        : "text-red-500"
+                        : txn.status === "Rejected" || txn.status === "declined"
+                        ? "text-red-500"
+                        : ""
                     }`}
                   >
                     {txn.status}

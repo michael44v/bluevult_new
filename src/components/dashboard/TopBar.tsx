@@ -55,6 +55,23 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
     }
   };
 
+  const clearNotifications = async () => {
+    if (!uid) return;
+    try {
+      const res = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: "clear_notifications", uid }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifications([]);
+      }
+    } catch (err) {
+      console.error("Error clearing notifications:", err);
+    }
+  };
+
   const unreadCount = notifications.filter(n => n.notification_status === 'unread').length;
 
   return (
@@ -96,7 +113,12 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
             <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-[#0f111b] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in slide-in-from-top-5">
               <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
                 <h3 className="font-bold dark:text-white">Notifications</h3>
-                <span className="text-xs text-blue-600 cursor-pointer">Clear all</span>
+                <span
+                  onClick={clearNotifications}
+                  className="text-xs text-blue-600 cursor-pointer hover:text-blue-700"
+                >
+                  Clear all
+                </span>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
