@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import ReCAPTCHA from 'react-google-recaptcha';
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 type Region = "Europe" | "Asia" | "Africa" | "Americas" | "Oceania";
 
@@ -24,6 +25,9 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [apiData, setApiData] = useState(null);
   const navigate = useNavigate();
+  const { data: settings = [] } = useSystemSettings();
+  const registrationEnabled = !Array.isArray(settings) || settings.find(s => s.setting_key === "registration_enabled")?.setting_value !== "false";
+
   const [message, setMessage] = useState("");
   const [captchaStatus, setcaptchaStatus] = useState(false);
   const [key, setKey] = useState('');
@@ -151,6 +155,12 @@ useEffect(() => {
             Sign Up
           </h2>
 
+          {!registrationEnabled && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl mb-6 text-center">
+              User registration is currently disabled by the administrator.
+            </div>
+          )}
+
 
  {message && (
                 <p
@@ -261,8 +271,9 @@ useEffect(() => {
             {/* SUBMIT */}
             <button
               type="submit"
+              disabled={!registrationEnabled}
               className="md:col-span-2 bg-emerald-500 hover:bg-emerald-600
-                         text-slate-900 font-semibold py-3 rounded-xl transition"
+                         text-slate-900 font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Account
             </button>

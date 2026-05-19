@@ -20,6 +20,7 @@ import TradingPage from "./pages/dashboard/TradingPage";
 import PositionsPage from "./pages/dashboard/PositionsPage";
 import SignIn from "./pages/auth/signIn";
 import SignUp from "./pages/auth/SignUp";
+import Maintenance from "./pages/Maintenance";
 
 import { useDarkMode } from "./hooks/useDarkMode";
 import ChatBot from "./components/ChatBot";
@@ -27,8 +28,21 @@ import BottomNav from "./components/BottomNav";
 
 const queryClient = new QueryClient();
 
+import { useSystemSettings } from "./hooks/useAdminData";
+
 const App = () => {
   useDarkMode();
+  const { data: settings = [] } = useSystemSettings();
+  const isMaintenanceMode = Array.isArray(settings) && settings.find(s => s.setting_key === "maintenance_mode")?.setting_value === "true";
+
+  if (isMaintenanceMode) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Maintenance />
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

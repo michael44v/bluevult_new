@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface WalletInfo {
   name: string;
@@ -61,6 +62,8 @@ export default function WithdrawPage() {
   const [kycStatus, setKycStatus] = useState<"verified" | "unverified">("unverified");
   const [modal, setModal] = useState<null | "kyc" | "confirm">();
   const navigate = useNavigate();
+  const { data: settings = [] } = useSystemSettings();
+  const kycRequired = settings.find(s => s.setting_key === "kyc_required")?.setting_value === "true";
   const uid = localStorage.getItem("user_id"); // example
 
   // Convert USD to crypto
@@ -90,6 +93,20 @@ export default function WithdrawPage() {
         const kycData = await kycRes.json();
         setKycStatus(kycData.kyc);
 
+        // 🔹 Fetch user balances
+        const balRes = await fetch("https://bluevult.com/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "sidebar", uid }), // Using sidebar to get total balance
+        });
+        const balData = await balRes.json();
+        const totalBalance = balData.balance;
+
+        if (kycData.kyc === "unverified" && totalBalance > 500000) {
+          setModal("kyc");
+          return;
+        }
+
         // 🔹 Fetch specific crypto balances
         const cryptoBalRes = await fetch("https://bluevult.com/api/index.php", {
           method: "POST",
@@ -113,6 +130,11 @@ export default function WithdrawPage() {
 
   const handleWithdraw = () => {
     if (!address || !amountUSD) return alert("Enter address and amount");
+
+    if (kycRequired && kycStatus !== "verified") {
+      setModal("kyc");
+      return;
+    }
 
     // Show confirm modal
     setModal("confirm");
@@ -251,6 +273,26 @@ export default function WithdrawPage() {
       <Footer />
 
       {/* Modals */}
+      {modal === "kyc" && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-sm text-center space-y-4">
+            <p className="font-bold text-lg">KYC Required</p>
+            <p>You need to complete your KYC to be eligible to withdraw.</p>
+            <button
+              onClick={() => navigate("/kyc_verify")}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              Verify Now
+            </button>
+            <button
+              onClick={() => setModal(null)}
+              className="block w-full mt-2 text-gray-500 text-sm hover:underline"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {modal === "confirm" && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-sm text-center space-y-4">
