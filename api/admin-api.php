@@ -774,7 +774,40 @@ echo json_encode([
         echo json_encode(["success" => $userId]);
         break;
 
+    case 'admin_get_settings':
+        $res = $db->query("SELECT * FROM system_settings");
+        $settings = [];
+        while ($row = $res->fetch_assoc()) {
+            $settings[] = $row;
+        }
+        echo json_encode(['success' => true, 'data' => $settings]);
+        break;
 
+    case 'admin_update_settings':
+        $settings = $input['settings'] ?? [];
+        $allowed_keys = [
+            'platform_name', 'maintenance_mode', 'registration_enabled',
+            'min_deposit', 'max_deposit', 'min_withdrawal', 'max_withdrawal',
+            'withdrawal_fee', 'require_2fa', 'kyc_required', 'session_timeout',
+            'email_notifications', 'sms_notifications', 'admin_alerts'
+        ];
+
+        $db->begin_transaction();
+        try {
+            foreach ($settings as $key => $value) {
+                if (in_array($key, $allowed_keys)) {
+                    $stmt = $db->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+                    $stmt->bind_param("sss", $key, $value, $value);
+                    $stmt->execute();
+                }
+            }
+            $db->commit();
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            $db->rollback();
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        break;
 
     default:
         echo json_encode(['error' => 'Unknown query']);

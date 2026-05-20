@@ -125,6 +125,11 @@ export async function fetchAllUsers(): Promise<User[]> {
   return apiRequest<User[]>("users", { q: "admin_get_users" });
 }
 
+export async function fetchAllAdminUsers(): Promise<any[]> {
+  const res = await apiRequest<{ success: boolean; data: any[] }>("users", { q: "fetch_users" });
+  return res.data || [];
+}
+
 export async function fetchUserById(userId: number): Promise<User> {
   return apiRequest<User>("user", { q: "admin_get_user", user_id: userId });
 }
@@ -156,8 +161,14 @@ export async function updateUserBalance(
   });
 }
 
-export async function fetchKYCSubmissions(): Promise<UserKYC[]> {
-  return apiRequest<UserKYC[]>("kyc", { q: "admin_get_kyc_submissions" });
+export async function fetchKYCSubmissions(): Promise<any> {
+  const res = await apiRequest<{ success: boolean; data: any }>("kyc", { q: "admin_get_kyc_submissions" });
+  return res.data;
+}
+
+export async function fetchDetailedKYCSubmissions(): Promise<any[]> {
+  const res = await apiRequest<{ success: boolean; data: any[] }>("kyc", { q: "fetch_kyc_submissions" });
+  return res.data || [];
 }
 
 export async function updateKYCStatus(
@@ -172,23 +183,20 @@ export async function updateKYCStatus(
 }
 
 export async function fetchAllTransactions(): Promise<Transaction[]> {
-  return apiRequest<Transaction[]>("transactions", { q: "admin_get_transactions" });
+  const res = await apiRequest<{ success: boolean; data: Transaction[] }>("transactions", { q: "admin_get_transactions" });
+  return res.data || [];
 }
 
 export async function fetchWithdrawals(): Promise<Transaction[]> {
-
-  const res = await apiRequest<{ data: Transaction[] }>("withdrawals", { q: "admin_get_withdrawals" });
-  
-     return res.data || [];
+  const res = await apiRequest<{ success: boolean; data: Transaction[] }>("withdrawals", { q: "admin_get_withdrawals" });
+  return res.data || [];
 }
 
 export async function fetchApprovedDeposits() {
-  return apiRequest<
-    { amount: string; approved_at: string }[]
-  >("transactions", {
+  const res = await apiRequest<{ success: boolean; data: any }>("transactions", {
     q: "admin_get_approved_deposits"
   });
-
+  return res.data;
 }
 
 export async function updateTransactionStatus(
@@ -233,7 +241,8 @@ export async function fetchDashboardStats(): Promise<{
   pendingKYC: number;
   pendingWithdrawals: number;
 }> {
-  return apiRequest("stats", { q: "admin_dashboard_stats" });
+  const res = await apiRequest<{ success: boolean; data: any }>("stats", { q: "admin_dashboard_stats" });
+  return res.data;
 }
 
 // Activity Logs
@@ -254,7 +263,8 @@ export async function fetchActivityLogStats(): Promise<{
 
 // System Settings
 export async function fetchSystemSettings(): Promise<SystemSettings[]> {
-  return apiRequest<SystemSettings[]>("settings", { q: "admin_get_settings" });
+  const res = await apiRequest<{ success: boolean; data: SystemSettings[] }>("settings", { q: "admin_get_settings" });
+  return res.data || [];
 }
 
 export async function updateSystemSettings(
