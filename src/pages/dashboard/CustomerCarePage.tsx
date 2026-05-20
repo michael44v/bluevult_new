@@ -150,17 +150,14 @@ const handleSend = () => {
         <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col sm:flex-row gap-4 justify-center items-center">
   <p className="text-gray-700 font-medium">Or reach us directly:</p>
 
-  <a className="border px-6 py-3 rounded-xl flex items-center gap-2">
-    <FaWhatsapp className="text-green-500" />
-    WhatsApp
-  </a>
+ 
 
-  <a className="border px-6 py-3 rounded-xl flex items-center gap-2">
+  <a href='mailto:support@bluevult.com'className="border px-6 py-3 rounded-xl flex items-center gap-2">
     <FaEnvelope className="text-red-500" />
     Gmail
   </a>
 
-  <a className="border px-6 py-3 rounded-xl flex items-center gap-2">
+  <a href='https://t.me/@BlueVultSupport'className="border px-6 py-3 rounded-xl flex items-center gap-2">
     <FaTelegramPlane className="text-blue-500" />
     Telegram
   </a>
