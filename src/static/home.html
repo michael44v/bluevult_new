@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vertexxHub | Professional Trading Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f97316', // orange-500
+                        secondary: '#fbbf24', // amber-400 (gold-ish)
+                        dark: '#0a0a0a',
+                        darker: '#000000',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; }
+        .gradient-text {
+            background: linear-gradient(to right, #f97316, #fbbf24);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+        }
+        .card-dark {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .faq-item.active .faq-answer { display: block; }
+        .faq-answer { display: none; }
+        .mobile-menu { display: none; }
+        .mobile-menu.active { display: flex; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-2">
+                    <img src="https://bluevult.com/img/BlurVultage.png" alt="Logo" class="w-10 h-10 object-contain">
+                    <span class="text-2xl font-bold gradient-text">vertexxHub</span>
+                </div>
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#features" class="text-gray-300 hover:text-primary transition">Features</a>
+                    <a href="#markets" class="text-gray-300 hover:text-primary transition">Markets</a>
+                    <a href="#testimonials" class="text-gray-300 hover:text-primary transition">Testimonials</a>
+                    <a href="/login" class="text-gray-300 hover:text-primary transition">Login</a>
+                    <a href="/signup" class="bg-gradient-primary text-black px-6 py-2 rounded-full font-semibold hover:shadow-lg hover:shadow-primary/20 transition">Get Started</a>
+                </div>
+                <div class="md:hidden">
+                    <button id="menu-btn" class="text-gray-300">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="mobile-menu hidden flex-col bg-black border-b border-white/10 p-4 space-y-4 md:hidden">
+            <a href="#features" class="text-gray-300">Features</a>
+            <a href="#markets" class="text-gray-300">Markets</a>
+            <a href="#testimonials" class="text-gray-300">Testimonials</a>
+            <a href="/login" class="text-gray-300">Login</a>
+            <a href="/signup" class="bg-gradient-primary text-black px-6 py-2 rounded-full font-semibold text-center">Get Started</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                    Master the Markets with <span class="gradient-text">vertexxHub</span>
+                </h1>
+                <p class="text-xl text-gray-400 mb-8 max-w-lg">
+                    Trade Crypto, Stocks, and Forex with professional tools, institutional liquidity, and 0% commission.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="/signup" class="bg-gradient-primary text-black px-8 py-4 rounded-xl font-bold text-center text-lg hover:scale-105 transition shadow-xl shadow-primary/20">
+                        Start Trading Now
+                    </a>
+                    <a href="#features" class="border border-white/20 bg-white/5 px-8 py-4 rounded-xl font-bold text-center text-lg hover:bg-white/10 transition">
+                        Explore Features
+                    </a>
+                </div>
+                <div class="mt-10 flex items-center space-x-6">
+                    <div class="flex -space-x-3">
+                        <img src="https://bluevult.com/img/u1.jpg" class="w-10 h-10 rounded-full border-2 border-black" alt="user" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'">
+                        <img src="https://bluevult.com/img/u2.jpg" class="w-10 h-10 rounded-full border-2 border-black" alt="user" onerror="this.src='https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'">
+                        <img src="https://bluevult.com/img/u3.jpg" class="w-10 h-10 rounded-full border-2 border-black" alt="user" onerror="this.src='https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop'">
+                    </div>
+                    <p class="text-sm text-gray-400"><span class="text-white font-bold">10k+</span> traders joined this week</p>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-30"></div>
+                <img src="https://bluevult.com/img/dashboard.png" class="relative rounded-2xl shadow-2xl border border-white/10" alt="Trading Dashboard" onerror="this.src='https://images.unsplash.com/photo-1611974717484-dad8afc71bc2?w=800&q=80'">
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-12 border-y border-white/5 bg-white/5">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+                <p class="text-3xl font-bold gradient-text">$4.2B+</p>
+                <p class="text-gray-400 text-sm">Trading Volume</p>
+            </div>
+            <div>
+                <p class="text-3xl font-bold gradient-text">1.2M+</p>
+                <p class="text-gray-400 text-sm">Active Users</p>
+            </div>
+            <div>
+                <p class="text-3xl font-bold gradient-text">0.01ms</p>
+                <p class="text-gray-400 text-sm">Execution Speed</p>
+            </div>
+            <div>
+                <p class="text-3xl font-bold gradient-text">24/7</p>
+                <p class="text-gray-400 text-sm">Expert Support</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="py-24 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Why Professional Traders Choose <span class="gradient-text">vertexxHub</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">Experience the next generation of trading with our advanced ecosystem designed for both speed and security.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-dark p-8 rounded-3xl group hover:border-primary/50 transition">
+                    <div class="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition">
+                        <i class="fas fa-bolt text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Ultra-Fast Execution</h3>
+                    <p class="text-gray-400">Low-latency trade execution powered by our proprietary matching engine, ensuring you get the best price every time.</p>
+                </div>
+                <div class="card-dark p-8 rounded-3xl group hover:border-primary/50 transition">
+                    <div class="w-14 h-14 bg-secondary/20 rounded-2xl flex items-center justify-center mb-6 text-secondary group-hover:scale-110 transition">
+                        <i class="fas fa-shield-alt text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Institutional Security</h3>
+                    <p class="text-gray-400">Multi-layer encryption, cold storage for assets, and 2FA protection keeping your investments safe and secure.</p>
+                </div>
+                <div class="card-dark p-8 rounded-3xl group hover:border-primary/50 transition">
+                    <div class="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition">
+                        <i class="fas fa-chart-line text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Advanced Analytics</h3>
+                    <p class="text-gray-400">Access professional-grade charting tools, real-time indicators, and historical data to refine your strategy.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Markets Section -->
+    <section id="markets" class="py-24 bg-gradient-to-b from-black to-gray-900 px-4">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div class="order-2 md:order-1">
+                <img src="https://bluevult.com/img/markets.png" class="rounded-3xl border border-white/10" alt="Markets" onerror="this.src='https://images.unsplash.com/photo-1642790103517-18129f55c840?w=800&q=80'">
+            </div>
+            <div class="order-1 md:order-2">
+                <h2 class="text-4xl font-bold mb-6">Trade Over <span class="gradient-text">2000+ Assets</span></h2>
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="text-primary mt-1"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <h4 class="font-bold text-lg">Cryptocurrencies</h4>
+                            <p class="text-gray-400 text-sm">Trade BTC, ETH, SOL and 500+ altcoins with up to 100x leverage.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="text-primary mt-1"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <h4 class="font-bold text-lg">Global Stocks</h4>
+                            <p class="text-gray-400 text-sm">Access US, EU, and Asian markets with 0 commission on all trades.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="text-primary mt-1"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <h4 class="font-bold text-lg">Forex & Commodities</h4>
+                            <p class="text-gray-400 text-sm">Trade major pairs, Gold, Silver, and Oil with institutional spreads.</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="mt-10 bg-white text-black px-8 py-4 rounded-xl font-bold hover:bg-primary hover:text-white transition">View All Markets</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="py-24 px-4 overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16">What Our <span class="gradient-text">Traders</span> Say</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-dark p-8 rounded-3xl">
+                    <div class="flex text-secondary mb-4">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="text-gray-300 italic mb-6">"vertexxHub has transformed my trading strategy. The execution speed is unmatched, and the UI is incredibly intuitive."</p>
+                    <div class="flex items-center gap-4">
+                        <img src="https://bluevult.com/img/t1.jpg" class="w-12 h-12 rounded-full" alt="User" onerror="this.src='https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop'">
+                        <div>
+                            <p class="font-bold">Alex Rivera</p>
+                            <p class="text-gray-500 text-xs">Professional Day Trader</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-dark p-8 rounded-3xl border-primary/30">
+                    <div class="flex text-secondary mb-4">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="text-gray-300 italic mb-6">"The best platform for both crypto and stocks. Support is always there when I need them, 24/7."</p>
+                    <div class="flex items-center gap-4">
+                        <img src="https://bluevult.com/img/t2.jpg" class="w-12 h-12 rounded-full" alt="User" onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop'">
+                        <div>
+                            <p class="font-bold">Sarah Chen</p>
+                            <p class="text-gray-500 text-xs">Portfolio Manager</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-dark p-8 rounded-3xl">
+                    <div class="flex text-secondary mb-4">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p class="text-gray-300 italic mb-6">"As a beginner, I found the educational resources and demo account extremely helpful. Now I'm trading live with confidence."</p>
+                    <div class="flex items-center gap-4">
+                        <img src="https://bluevult.com/img/t3.jpg" class="w-12 h-12 rounded-full" alt="User" onerror="this.src='https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop'">
+                        <div>
+                            <p class="font-bold">Michael Scott</p>
+                            <p class="text-gray-500 text-xs">Retail Trader</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="py-24 px-4 bg-white/5">
+        <div class="max-w-3xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="faq-item card-dark rounded-2xl overflow-hidden cursor-pointer">
+                    <div class="faq-header p-6 flex justify-between items-center bg-white/5">
+                        <span class="font-bold">Is vertexxHub regulated?</span>
+                        <i class="fas fa-chevron-down transition"></i>
+                    </div>
+                    <div class="faq-answer p-6 text-gray-400 border-t border-white/10">
+                        Yes, vertexxHub is registered and compliant with international financial regulations, ensuring a secure trading environment for all our users.
+                    </div>
+                </div>
+                <div class="faq-item card-dark rounded-2xl overflow-hidden cursor-pointer">
+                    <div class="faq-header p-6 flex justify-between items-center bg-white/5">
+                        <span class="font-bold">What are the withdrawal fees?</span>
+                        <i class="fas fa-chevron-down transition"></i>
+                    </div>
+                    <div class="faq-answer p-6 text-gray-400 border-t border-white/10">
+                        We offer $0 withdrawal fees for most methods. Network fees apply for cryptocurrency transfers but are kept at the absolute minimum.
+                    </div>
+                </div>
+                <div class="faq-item card-dark rounded-2xl overflow-hidden cursor-pointer">
+                    <div class="faq-header p-6 flex justify-between items-center bg-white/5">
+                        <span class="font-bold">Can I trade with leverage?</span>
+                        <i class="fas fa-chevron-down transition"></i>
+                    </div>
+                    <div class="faq-answer p-6 text-gray-400 border-t border-white/10">
+                        Absolutely. We offer flexible leverage options up to 1:500 for Forex and 1:100 for Cryptocurrencies depending on your account level.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 px-4">
+        <div class="max-w-5xl mx-auto bg-gradient-primary rounded-3xl p-12 text-center text-black relative overflow-hidden">
+            <div class="absolute -top-12 -left-12 w-64 h-64 bg-white/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-64 h-64 bg-black/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10">
+                <h2 class="text-4xl font-black mb-6">Ready to Start Your Journey?</h2>
+                <p class="text-xl mb-10 opacity-80 max-w-xl mx-auto">Join millions of traders who already trust vertexxHub for their financial future. Open your account in minutes.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="/signup" class="bg-black text-white px-10 py-4 rounded-xl font-bold text-lg hover:scale-105 transition">Create Free Account</a>
+                    <a href="/login" class="bg-white/20 backdrop-blur-md px-10 py-4 rounded-xl font-bold text-lg border border-black/10 hover:bg-white/30 transition">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-20 px-4 border-t border-white/10">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div class="col-span-1 md:col-span-2">
+                <div class="flex items-center gap-2 mb-6">
+                    <img src="https://bluevult.com/img/BlurVultage.png" alt="Logo" class="w-10 h-10 object-contain">
+                    <span class="text-3xl font-bold gradient-text">vertexxHub</span>
+                </div>
+                <p class="text-gray-400 max-w-sm mb-6">vertexxHub is a leading global multi-asset trading platform providing users with innovative tools and technologies to master the financial markets.</p>
+                <div class="flex space-x-6 text-2xl">
+                    <a href="#" class="text-gray-500 hover:text-primary"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-primary"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-primary"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-primary"><i class="fab fa-telegram"></i></a>
+                </div>
+            </div>
+            <div>
+                <h5 class="font-bold mb-6">Company</h5>
+                <ul class="space-y-4 text-gray-400">
+                    <li><a href="#" class="hover:text-white transition">About Us</a></li>
+                    <li><a href="#" class="hover:text-white transition">Careers</a></li>
+                    <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-bold mb-6">Support</h5>
+                <ul class="space-y-4 text-gray-400">
+                    <li><a href="#" class="hover:text-white transition">Help Center</a></li>
+                    <li><a href="#" class="hover:text-white transition">Contact Us</a></li>
+                    <li><a href="#" class="hover:text-white transition">API Documentation</a></li>
+                    <li><a href="#" class="hover:text-white transition">System Status</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 text-center text-gray-600 text-sm">
+            <p>© 2024 vertexxHub. All rights reserved. High-risk investment warning: Trading financial instruments carries a high level of risk.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('active');
+        });
+
+        // FAQ Accordion
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                faqItems.forEach(i => {
+                    i.classList.remove('active');
+                    i.querySelector('i').classList.remove('rotate-180');
+                });
+                if (!isActive) {
+                    item.classList.add('active');
+                    item.querySelector('i').classList.add('rotate-180');
+                }
+            });
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenu.classList.add('hidden');
+                        mobileMenu.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -643,7 +643,7 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         case "mark_notifications_seen":
             $uid = intval($input['uid'] ?? 0);
             if ($uid) {
-                $conn->query("UPDATE user_notifications SET is_notified = 1 WHERE user_id = $uid");
+                $conn->query("UPDATE user_notifications SET is_notified = 1, notification_status = 'read' WHERE user_id = $uid");
                 echo json_encode(['success' => true]);
             }
             break;
