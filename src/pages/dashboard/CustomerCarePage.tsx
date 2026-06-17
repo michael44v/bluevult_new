@@ -157,7 +157,12 @@ const handleSend = () => {
     Gmail
   </a>
 
-  <a href='https://t.me/@BlueVultSupport'className="border px-6 py-3 rounded-xl flex items-center gap-2">
+ <a 
+    href="https://t.me/BlueVultSupport" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="border px-6 py-3 rounded-xl flex items-center gap-2"
+  >
     <FaTelegramPlane className="text-blue-500" />
     Telegram
   </a>

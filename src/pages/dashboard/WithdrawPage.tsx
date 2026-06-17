@@ -60,11 +60,12 @@ export default function WithdrawPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [kycStatus, setKycStatus] = useState<"verified" | "unverified">("unverified");
-  const [modal, setModal] = useState<null | "kyc" | "confirm">();
+  const [modal, setModal] = useState<null | "kyc" | "confirm" | "minBalance">();
+  const [totalBalanceUSD, setTotalBalanceUSD] = useState<number>(0);
   const navigate = useNavigate();
   const { data: settings = [] } = useSystemSettings();
   const kycRequired = settings.find(s => s.setting_key === "kyc_required")?.setting_value === "true";
-  const uid = localStorage.getItem("user_id"); // example
+  const uid = localStorage.getItem("user_id");
 
   // Convert USD to crypto
   useEffect(() => {
@@ -97,10 +98,13 @@ export default function WithdrawPage() {
         const balRes = await fetch("https://bluevult.com/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "sidebar", uid }), // Using sidebar to get total balance
+          body: JSON.stringify({ q: "sidebar", uid }),
         });
         const balData = await balRes.json();
-        const totalBalance = balData.balance;
+        const totalBalance = Number(balData.balance) || 0;
+
+        // Save the USD balance from sidebar directly into state
+        setTotalBalanceUSD(totalBalance);
 
         if (kycData.kyc === "unverified" && totalBalance > 500000) {
           setModal("kyc");
@@ -118,7 +122,7 @@ export default function WithdrawPage() {
         wallets.forEach((w) => {
           if (cryptoBalData[w.symbol] !== undefined) w.balance = cryptoBalData[w.symbol];
         });
-        setSelected(wallets[0]); // refresh
+        setSelected(wallets[0]);
       } catch (err) {
         console.error(err);
       }
@@ -130,17 +134,12 @@ export default function WithdrawPage() {
   const handleWithdraw = () => {
     if (!address || !amountUSD) return alert("Enter address and amount");
 
-    // Strictly follow "kyc modal should only pop up if unverified user balance > 500k"
-    // However, if we also want to respect the system setting 'kycRequired':
-    // If setting is ON, it should probably block withdrawal regardless of balance if not verified.
-    // If setting is OFF, it should ONLY block if balance > 500k.
+    // Show minimum balance modal only if total portfolio USD value is below $60,000
+    if (totalBalanceUSD < 60000) {
+      setModal("minBalance");
+      return;
+    }
 
-    // Actually, the user's explicit request usually overrides general settings.
-    // "the kyc modal should only pop up if the unverified user has a balance greater than 500000usd"
-
-    // Let's implement exactly what was asked.
-
-    // Show confirm modal
     setModal("confirm");
   };
 
@@ -162,7 +161,6 @@ export default function WithdrawPage() {
       const data = await res.json();
 
       if (data.status === "success") {
-        // Fade out before redirect
         document.body.style.transition = "opacity 1.5s";
         document.body.style.opacity = "0.8";
         setTimeout(() => navigate("/history"), 1500);
@@ -297,6 +295,7 @@ export default function WithdrawPage() {
           </div>
         </div>
       )}
+
       {modal === "confirm" && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl max-w-sm text-center space-y-4">
@@ -316,6 +315,31 @@ export default function WithdrawPage() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {modal === "minBalance" && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl max-w-sm text-center space-y-4 shadow-xl">
+            <div className="flex justify-center">
+              <div className="bg-red-100 p-4 rounded-full">
+                <FaWallet className="text-red-500 text-2xl" />
+              </div>
+            </div>
+            <p className="font-bold text-lg text-gray-900">Withdrawal Unavailable</p>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Withdrawal request cannot be processed at this time, as your account does not meet the
+              minimum withdrawal requirement. The minimum withdrawal amount for your account tier is{" "}
+              <span className="font-semibold text-gray-900">$60,000</span>. Top up balance to make
+              withdrawal.
+            </p>
+            <button
+              onClick={() => setModal(null)}
+              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
