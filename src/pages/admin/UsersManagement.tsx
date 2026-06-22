@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import './admincss.css';
 import AdminLayout from "./components/AdminLayout";
 import { FaSearch, FaEdit, FaBan, FaCheckCircle, FaEye } from "react-icons/fa";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 
 
@@ -20,6 +21,9 @@ interface User {
 }
 
 const UsersManagement: React.FC = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -95,19 +99,21 @@ const UsersManagement: React.FC = () => {
             ? "After our review, your BlueVult account wallet has been suspended."
             : "Good news! Your BlueVult account wallet has been activated.";
 
-        fetch('https://bluevult.com/api/mail.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            subject: emailSubject,
-            name: user.name,
-            email: user.email,
-            message: emailMessage
+        if (emailNotifications) {
+          fetch('https://bluevult.com/api/mail.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subject: emailSubject,
+              name: user.name,
+              email: user.email,
+              message: emailMessage
+            })
           })
-        })
-        .then(res => res.json())
-        .then(console.log)
-        .catch(console.error);
+          .then(res => res.json())
+          .then(console.log)
+          .catch(console.error);
+        }
       } else {
         alert("Failed to update user status");
       }

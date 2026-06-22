@@ -134,7 +134,7 @@ useEffect(() => {
         <div className="hidden md:flex flex-col justify-center">
           <h1 className="text-4xl font-extrabold text-white">
             Create your <br />
-            <span className="text-emerald-400">BlueVult</span> account
+            <span className="text-emerald-400">{settings.find(s => s.setting_key === "platform_name")?.setting_value || "BlueVult"}</span> account
           </h1>
 
           <p className="mt-6 text-slate-300 max-w-md">
@@ -271,7 +271,7 @@ useEffect(() => {
             {/* SUBMIT */}
             <button
               type="submit"
-              disabled={!registrationEnabled}
+              disabled={!registrationEnabled || !captchaStatus}
               className="md:col-span-2 bg-emerald-500 hover:bg-emerald-600
                          text-slate-900 font-semibold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
             >

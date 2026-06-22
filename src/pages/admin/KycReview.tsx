@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "./components/AdminLayout";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 import { FaSearch, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
@@ -18,6 +19,9 @@ interface KycSubmission {
 }
 
 const KycReview: React.FC = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
+
   const [kycSubmissions, setKycSubmissions] = useState<KycSubmission[]>([]);
   const [search, setSearch] = useState("");
 
@@ -83,19 +87,21 @@ const KycReview: React.FC = () => {
             ? `Hello ${submission.uname},<br><br>Your KYC verification has been approved. You now have full access to your BlueVult account.`
             : `Hello ${submission.uname},<br><br>Unfortunately, your KYC verification was rejected. Please review your submitted documents and try again.`;
 
-        fetch("https://bluevult.com/api/mail.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subject: emailSubject,
-            name: submission.uname,
-            email: submission.user_email, // <-- fixed
-            message: emailMessage,
-          }),
-        })
-          .then((res) => res.json())
-          .then(console.log)
-          .catch(console.error);
+        if (emailNotifications) {
+          fetch("https://bluevult.com/api/mail.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject: emailSubject,
+              name: submission.uname,
+              email: submission.user_email, // <-- fixed
+              message: emailMessage,
+            }),
+          })
+            .then((res) => res.json())
+            .then(console.log)
+            .catch(console.error);
+        }
       } else {
         alert("Failed to update KYC status");
       }

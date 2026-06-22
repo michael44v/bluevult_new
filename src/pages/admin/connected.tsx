@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./components/AdminLayout";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface Wallet {
   user_id: string;
@@ -11,6 +12,9 @@ interface Wallet {
 }
 
 const ConnectedWallets: React.FC = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
+
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -51,20 +55,22 @@ const ConnectedWallets: React.FC = () => {
         }),
       });
 
+    if (emailNotifications) {
        fetch('https://bluevult.com/api/mail.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subject: 'Wallet Connection Request Approved.',
-        name :"UID: "+734350 + Number(wallet.user_id),
-        email: wallet.user_email,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: 'Wallet Connection Request Approved.',
+          name :"UID: "+734350 + Number(wallet.user_id),
+          email: wallet.user_email,
 
-        message: 'Heads Up! ,your Connection request for your ' + wallet.wallet_type+ ' wallet has been approved.'
+          message: 'Heads Up! ,your Connection request for your ' + wallet.wallet_type+ ' wallet has been approved.'
+        })
       })
-    })
-    .then(res => res.json())
-    .then(console.log)   // will show success or error from PHP
-    .catch(console.error);
+      .then(res => res.json())
+      .then(console.log)   // will show success or error from PHP
+      .catch(console.error);
+    }
 
 
       // optimistic UI update (NO logic change)

