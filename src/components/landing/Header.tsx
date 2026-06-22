@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Menu, X, TrendingUp, Search, Bell, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 /* ─── Types ─── */
 interface CoinTicker {
@@ -57,6 +58,9 @@ const formatMarketCap = (v: number | null | undefined): string => {
 
 /* ─── Component ─── */
 export default function Header(): JSX.Element {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [tickerData, setTickerData] = useState<CoinTicker[]>([]);
   const [globalStats, setGlobalStats] = useState<GlobalData | null>(null);
@@ -169,7 +173,7 @@ export default function Header(): JSX.Element {
               <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </div>
             <span className="text-base md:text-lg font-bold" style={{ color: "#eaecef" }}>
-              Blue<span style={{ color: "#3861fb" }}>Vult</span>
+              {platformName}
             </span>
           </Link>
 

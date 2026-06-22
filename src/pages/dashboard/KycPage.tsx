@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
 import { useNavigate } from "react-router-dom";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 import {
   FaBars,
@@ -39,6 +40,8 @@ export default function KycPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const navigate = useNavigate();
+  const { data: settings = [] } = useSystemSettings();
+  const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
 
 
   const CLOUD_NAME = "dguvkirdr";
@@ -217,21 +220,22 @@ const submitKyc = async () => {
     setIdType("");
     setCountry("");
 
+    if (emailNotifications) {
+      fetch('https://bluevult.com/api/mail.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: 'KYC Verification Request',
+          name :uname,
+          email: localStorage.getItem("user_email"),
 
-    fetch('https://bluevult.com/api/mail.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subject: 'KYC Verification Request',
-        name :uname,
-        email: localStorage.getItem("user_email"),
-
-        message: 'Your documents have been recieved and is under review. please check back in 10 - 15 minutes time'
+          message: 'Your documents have been recieved and is under review. please check back in 10 - 15 minutes time'
+        })
       })
-    })
-    .then(res => res.json())
-    .then(console.log)   // will show success or error from PHP
-    .catch(console.error);
+      .then(res => res.json())
+      .then(console.log)   // will show success or error from PHP
+      .catch(console.error);
+    }
 
 
 

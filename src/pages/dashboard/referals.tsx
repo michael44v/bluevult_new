@@ -1,8 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 const Referral: React.FC = () => {
   const { refId } = useParams<{ refId: string }>();
   const navigate = useNavigate();
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
 
   const handleSignup = () => {
     // Optional: store referrer so signup can use it
@@ -16,7 +19,7 @@ const Referral: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-[#0f111b] px-4">
       <div className="bg-white dark:bg-[#0a1120] max-w-md w-full rounded-2xl shadow-lg p-8 text-center space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome to BlueVult 🚀
+          Welcome to {platformName} 🚀
         </h1>
 
         <p className="text-gray-600 dark:text-gray-300">

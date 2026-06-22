@@ -65,6 +65,10 @@ export default function WithdrawPage() {
   const navigate = useNavigate();
   const { data: settings = [] } = useSystemSettings();
   const kycRequired = settings.find(s => s.setting_key === "kyc_required")?.setting_value === "true";
+  const minWithdrawalSetting = settings.find(s => s.setting_key === "min_withdrawal")?.setting_value || "60000";
+  const maxWithdrawalSetting = settings.find(s => s.setting_key === "max_withdrawal")?.setting_value;
+  const withdrawalFeeSetting = settings.find(s => s.setting_key === "withdrawal_fee")?.setting_value;
+
   const uid = localStorage.getItem("user_id");
 
   // Convert USD to crypto
@@ -106,7 +110,7 @@ export default function WithdrawPage() {
         // Save the USD balance from sidebar directly into state
         setTotalBalanceUSD(totalBalance);
 
-        if (kycData.kyc === "unverified" && totalBalance > 500000) {
+        if (kycData.kyc === "unverified" && kycRequired) {
           setModal("kyc");
         }
 
@@ -134,9 +138,16 @@ export default function WithdrawPage() {
   const handleWithdraw = () => {
     if (!address || !amountUSD) return alert("Enter address and amount");
 
-    // Show minimum balance modal only if total portfolio USD value is below $60,000
-    if (totalBalanceUSD < 60000) {
+    const amount = parseFloat(amountUSD);
+
+    // Show minimum balance modal only if total portfolio USD value is below minimum withdrawal setting
+    if (totalBalanceUSD < parseFloat(minWithdrawalSetting)) {
       setModal("minBalance");
+      return;
+    }
+
+    if (maxWithdrawalSetting && amount > parseFloat(maxWithdrawalSetting)) {
+      alert(`Maximum withdrawal amount is $${parseFloat(maxWithdrawalSetting).toLocaleString()}`);
       return;
     }
 
@@ -251,7 +262,10 @@ export default function WithdrawPage() {
 
             {/* Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <Info label="Network Fee" value={`${selected.fee} ${selected.symbol}`} />
+              <Info
+                label="Withdrawal Fee"
+                value={withdrawalFeeSetting ? `${withdrawalFeeSetting}%` : `${selected.fee} ${selected.symbol}`}
+              />
               <Info label="Processing Time" value={selected.processingTime} />
             </div>
 
@@ -331,7 +345,7 @@ export default function WithdrawPage() {
             <p className="text-gray-600 text-sm leading-relaxed">
               Withdrawal request cannot be processed at this time, as your account does not meet the
               minimum withdrawal requirement. The minimum withdrawal amount for your account tier is{" "}
-              <span className="font-semibold text-gray-900">$60,000</span>. Top up balance to make
+              <span className="font-semibold text-gray-900">${parseFloat(minWithdrawalSetting).toLocaleString()}</span>. Top up balance to make
               withdrawal.
             </p>
             <button

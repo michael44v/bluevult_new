@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface WalletInfo {
   name: string;
@@ -69,6 +70,11 @@ export default function DepositPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const { data: settings = [] } = useSystemSettings();
+  const minDeposit = settings.find(s => s.setting_key === "min_deposit")?.setting_value;
+  const maxDeposit = settings.find(s => s.setting_key === "max_deposit")?.setting_value;
+  const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
+
   const userId = localStorage.getItem("user_id");
 
   // Calculate crypto amount in selected currency from USD
@@ -92,6 +98,16 @@ export default function DepositPage() {
   const handlePaymentMade = async () => {
     if (!usdAmount || !cryptoAmount) {
       alert("Please enter an amount before confirming payment.");
+      return;
+    }
+
+    const amount = parseFloat(usdAmount);
+    if (minDeposit && amount < parseFloat(minDeposit)) {
+      alert(`Minimum deposit amount is $${parseFloat(minDeposit).toLocaleString()}`);
+      return;
+    }
+    if (maxDeposit && amount > parseFloat(maxDeposit)) {
+      alert(`Maximum deposit amount is $${parseFloat(maxDeposit).toLocaleString()}`);
       return;
     }
 
@@ -141,22 +157,22 @@ export default function DepositPage() {
         document.body.style.transition = "opacity 1.5s";
         document.body.style.opacity = "0.6";
 
+    if (emailNotifications) {
+      fetch('https://bluevult.com/api/mail.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: 'Deposit Request of $' + parseFloat(usdAmount) +' recieved.',
+          name :localStorage.getItem("user_name"),
+          email: localStorage.getItem("user_email"),
 
-
-    fetch('https://bluevult.com/api/mail.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subject: 'Deposit Request of $' + parseFloat(usdAmount) +' recieved.',
-        name :localStorage.getItem("user_name"),
-        email: localStorage.getItem("user_email"),
-
-        message: 'Your Deposit request of $' + parseFloat(usdAmount)+ ' ('+ amountBTC.toFixed(8)+' BTC) have been recieved and is under review. You will recieve the funds when the block is confirmed 10 - 15 minutes time.'
+          message: 'Your Deposit request of $' + parseFloat(usdAmount)+ ' ('+ amountBTC.toFixed(8)+' BTC) have been recieved and is under review. You will recieve the funds when the block is confirmed 10 - 15 minutes time.'
+        })
       })
-    })
-    .then(res => res.json())
-    .then(console.log)   // will show success or error from PHP
-    .catch(console.error);
+      .then(res => res.json())
+      .then(console.log)   // will show success or error from PHP
+      .catch(console.error);
+    }
 
 
         setTimeout(() => {

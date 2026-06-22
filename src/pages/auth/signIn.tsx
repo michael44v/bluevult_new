@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -13,6 +14,9 @@ const SignIn = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [captchaStatus, setCaptchaStatus] = useState(false);
+
+  const { data: settings = [] } = useSystemSettings();
+  const require2FA = settings.find(s => s.setting_key === "require_2fa")?.setting_value === "true";
 
   // Handle input change
   const handleChange = (
@@ -69,6 +73,11 @@ const SignIn = () => {
       }
 
       // ✅ LOGIN SUCCESS
+      if (require2FA) {
+        setError("Two-Factor Authentication (2FA) is mandatory for all accounts. Please contact support via live chat or email to verify your 2FA setup and complete your sign-in.");
+        return;
+      }
+
       setMessage("Login successful");
       localStorage.setItem("user_id", data.user_id);
 
@@ -93,7 +102,7 @@ const SignIn = () => {
         <div className="hidden md:block">
           <h1 className="text-4xl font-extrabold text-white leading-tight">
             Welcome back to <br />
-            <span className="text-emerald-400">BlueVult</span>
+            <span className="text-emerald-400">{settings.find(s => s.setting_key === "platform_name")?.setting_value || "BlueVult"}</span>
           </h1>
 
           <p className="mt-6 text-slate-300 max-w-md">

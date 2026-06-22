@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -8,6 +9,9 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState("");
   const [captchaStatus, setCaptchaStatus] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { data: settings = [] } = useSystemSettings();
+  const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
 
   const onCaptchaSuccess = (token: string | null) => {
     if (token) {
@@ -26,6 +30,12 @@ const ForgotPassword = () => {
     
 
     setLoading(true);
+
+    if (!emailNotifications) {
+      setMessage("Reset link sent! Check your inbox.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("https://bluevult.com/api/mail.php", {

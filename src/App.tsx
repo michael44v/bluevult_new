@@ -29,10 +29,37 @@ import BottomNav from "./components/BottomNav";
 const queryClient = new QueryClient();
 
 import { useSystemSettings } from "./hooks/useAdminData";
+import { useEffect, useCallback, useRef } from "react";
 
 const AppContent = () => {
   const { data: settings = [] } = useSystemSettings();
   const isMaintenanceMode = Array.isArray(settings) && settings.find(s => s.setting_key === "maintenance_mode")?.setting_value === "true";
+  const sessionTimeoutMinutes = parseInt(Array.isArray(settings) && settings.find(s => s.setting_key === "session_timeout")?.setting_value || "30", 10);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("user_id");
+    window.location.href = "/signin";
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (localStorage.getItem("user_id")) {
+      timeoutRef.current = setTimeout(logout, sessionTimeoutMinutes * 60 * 1000);
+    }
+  }, [logout, sessionTimeoutMinutes]);
+
+  useEffect(() => {
+    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [resetTimer]);
 
   if (isMaintenanceMode) {
     return <Maintenance />;
