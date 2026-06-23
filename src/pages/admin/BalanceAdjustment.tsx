@@ -37,7 +37,7 @@ const BalanceAdjustment: React.FC = () => {
   // 🔹 Fetch users dynamically
   const fetchUsers = async () => {
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_users" }),
@@ -52,7 +52,7 @@ const BalanceAdjustment: React.FC = () => {
   // 🔹 Fetch recent adjustments dynamically
   const fetchAdjustments = async () => {
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_adjustments" }),
@@ -90,7 +90,7 @@ const BalanceAdjustment: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

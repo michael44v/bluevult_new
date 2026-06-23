@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    
-    <title>BlueVult</title>
+    <title>Platform</title>
+    <script>
+      // Dynamically set platform name from localStorage if available,
+      // though true dynamic setting usually happens after React hydration.
+      const savedSettings = localStorage.getItem('system_settings');
+      if (savedSettings) {
+        try {
+          const settings = JSON.parse(savedSettings);
+          const platformName = settings.find(s => s.setting_key === 'platform_name')?.setting_value;
+          if (platformName) document.title = platformName;
+        } catch (e) {}
+      }
+    </script>
     
     <link rel="icon" type="image/png" href="/faviconnn.ico" />
   </head>

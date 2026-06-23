@@ -90,7 +90,7 @@ export default function WithdrawPage() {
 
       try {
         // 🔹 Check KYC
-        const kycRes = await fetch("https://bluevult.com/api/index.php", {
+        const kycRes = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "get_kyc_status", uid }),
@@ -99,7 +99,7 @@ export default function WithdrawPage() {
         setKycStatus(kycData.kyc);
 
         // 🔹 Fetch user balances
-        const balRes = await fetch("https://bluevult.com/api/index.php", {
+        const balRes = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "sidebar", uid }),
@@ -110,12 +110,12 @@ export default function WithdrawPage() {
         // Save the USD balance from sidebar directly into state
         setTotalBalanceUSD(totalBalance);
 
-        if (kycData.kyc === "unverified" && kycRequired) {
+        if (kycData.kyc !== "verified" && kycRequired) {
           setModal("kyc");
         }
 
         // 🔹 Fetch specific crypto balances
-        const cryptoBalRes = await fetch("https://bluevult.com/api/index.php", {
+        const cryptoBalRes = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "get_balance", uid }),
@@ -140,8 +140,13 @@ export default function WithdrawPage() {
 
     const amount = parseFloat(amountUSD);
 
+    if (kycRequired && kycStatus !== "verified") {
+      setModal("kyc");
+      return;
+    }
+
     // Show minimum balance modal only if total portfolio USD value is below minimum withdrawal setting
-    if (totalBalanceUSD < parseFloat(minWithdrawalSetting)) {
+    if (amount < parseFloat(minWithdrawalSetting)) {
       setModal("minBalance");
       return;
     }
@@ -157,7 +162,7 @@ export default function WithdrawPage() {
   const confirmWithdraw = async () => {
     if (!uid) return;
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

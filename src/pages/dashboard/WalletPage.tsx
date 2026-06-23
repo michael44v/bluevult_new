@@ -138,7 +138,7 @@ export default function DepositPage() {
       }
 
       // 4️⃣ Send to backend: original crypto + BTC + USD
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -158,7 +158,7 @@ export default function DepositPage() {
         document.body.style.opacity = "0.6";
 
     if (emailNotifications) {
-      fetch('https://bluevult.com/api/mail.php', {
+      fetch('/api/mail.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 const OtpVerify = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -21,7 +25,7 @@ const OtpVerify = () => {
     const sendOtp = async () => {
       setSending(true);
       try {
-        const response = await fetch("https://bluevult.com/api/send-otp.php", {
+        const response = await fetch("/api/send-otp.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uid }),
@@ -51,7 +55,7 @@ const OtpVerify = () => {
     }
 
     try {
-      const response = await fetch("https://bluevult.com/api/otp-verify.php", {
+      const response = await fetch("/api/otp-verify.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, otp }),
@@ -83,7 +87,7 @@ const OtpVerify = () => {
     setResending(true);
 
     try {
-      const response = await fetch("https://bluevult.com/api/send-otp.php", {
+      const response = await fetch("/api/send-otp.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid }),

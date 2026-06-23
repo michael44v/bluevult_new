@@ -72,7 +72,7 @@ useEffect(() => {
   const fetchDataOnce = async () => {
     try {
       
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +133,7 @@ useEffect(() => {
     <aside className="w-64 min-h-screen p-4 bg-gray-50 dark:bg-[#020617] border-r flex flex-col gap-4">
       <LoggedOutModal open={showModal} onConfirm={handleConfirm} />
 
-      <h1 className="text-xl font-bold px-2 text-gray-900 dark:text-white">{platformName}</h1>
+      <h1 className="text-xl font-bold px-2 text-gray-900 dark:text-white">BlueVult</h1>
 
       {/* ===== User Profile ===== */}
       <div className="bg-white dark:bg-[#0a1120] rounded-2xl p-4 shadow">

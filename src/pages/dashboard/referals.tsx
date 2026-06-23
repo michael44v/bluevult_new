@@ -19,7 +19,7 @@ const Referral: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-[#0f111b] px-4">
       <div className="bg-white dark:bg-[#0a1120] max-w-md w-full rounded-2xl shadow-lg p-8 text-center space-y-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Welcome to {platformName} 🚀
+          Welcome to BlueVult 🚀
         </h1>
 
         <p className="text-gray-600 dark:text-gray-300">

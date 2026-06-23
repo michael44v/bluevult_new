@@ -22,7 +22,7 @@ const ConnectedWallets: React.FC = () => {
   const fetchWallets = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_wallets" }),
@@ -44,7 +44,7 @@ const ConnectedWallets: React.FC = () => {
 
   const updateWalletStatus = async (wallet: Wallet) => {
     try {
-      await fetch("https://bluevult.com/api/admin-api.php", {
+      await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -56,7 +56,7 @@ const ConnectedWallets: React.FC = () => {
       });
 
     if (emailNotifications) {
-       fetch('https://bluevult.com/api/mail.php', {
+       fetch('/api/mail.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

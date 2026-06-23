@@ -13,6 +13,21 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 
+// Use global config if available, otherwise fallback (matches existing api files)
+$host = "localhost";
+$user = "ktkdvcdj_root";
+$password = "victor47009A";
+$database = "ktkdvcdj_bluevult";
+$conn = mysqli_connect($host, $user, $password, $database);
+if ($conn) {
+    $res = mysqli_query($conn, "SELECT setting_value FROM system_settings WHERE setting_key='email_notifications'");
+    $row = mysqli_fetch_assoc($res);
+    if ($row && $row['setting_value'] === 'false') {
+        echo json_encode(['success' => false, 'message' => 'Email notifications are disabled']);
+        exit();
+    }
+}
+
 $data = json_decode(file_get_contents("php://input"), true);
 
 $name = $data['name'] ?? 'Anonymous';
@@ -35,8 +50,16 @@ try {
 
     $mail->CharSet = 'UTF-8';
 
+    // Fetch platform name
+    $platformName = 'BlueVult';
+    if ($conn) {
+        $res = mysqli_query($conn, "SELECT setting_value FROM system_settings WHERE setting_key='platform_name'");
+        $row = mysqli_fetch_assoc($res);
+        if ($row) $platformName = $row['setting_value'];
+    }
+
     // ===== Sender & Recipient =====
-    $mail->setFrom('support@bluevult.com', 'BlueVult'); // Must be your verified domain
+    $mail->setFrom('support@bluevult.com', $platformName); // Must be your verified domain
     $mail->addAddress($email, $name); // User
 
     // ===== Email Content =====
@@ -44,7 +67,7 @@ try {
     $mail->Subject = $subject;
 
     // ===== Plain text fallback =====
-    $mail->AltBody = "Dear $name,\n\n$subject\n\n$messageText\n\nBlueVult Ltd.";
+    $mail->AltBody = "Dear $name,\n\n$subject\n\n$messageText\n\n$platformName Ltd.";
 
     // ===== HTML Content =====
 
@@ -71,7 +94,7 @@ $mail->Body = "
 <div style='max-width:600px; margin:20px auto; background:#17212d; padding:30px; border-radius:16px; border: 1px solid #1a2535;'>
     <div style='text-align:center; margin-bottom:30px;'>
         <a href='https://bluevult.com' style='display:inline-block; text-decoration:none;'>
-            <h1 style='color:#3861fb; margin:0; font-size:32px; font-weight:bold;'>BlueVult</h1>
+            <h1 style='color:#3861fb; margin:0; font-size:32px; font-weight:bold;'>$platformName</h1>
         </a>
     </div>
     <div style='margin-bottom:25px;'>
@@ -85,10 +108,10 @@ $mail->Body = "
         <a href='https://bluevult.com/dashboard' style='display:inline-block; background:#3861fb; color:#ffffff; text-decoration:none; padding:12px 25px; border-radius:8px; font-weight:bold;'>Go to Dashboard</a>
     </div>
     <div style='font-size:12px; color:#4a5568; text-align:center; margin-top:30px;'>
-        <strong>BlueVult Ltd.</strong><br/>
+        <strong>$platformName Ltd.</strong><br/>
         <a href='https://bluevult.com' style='color:#3861fb;'>Website</a> |
         <a href='https://bluevult.com/privacy-policy' style='color:#3861fb;'>Privacy Policy</a><br/>
-        © " . date("Y") . " BlueVult. All rights reserved.<br/>
+        © " . date("Y") . " $platformName. All rights reserved.<br/>
         This email was sent automatically. Do not reply.
     </div>
 </div>

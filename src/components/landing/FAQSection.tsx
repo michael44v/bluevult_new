@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface QA {
   question: string;
   answer: string;
 }
 
-const cryptoQAs: QA[] = [
+const generateQAs = (BlueVult: string): QA[] => [
   { question: "What is Bitcoin?", answer: "Bitcoin is a decentralized cryptocurrency that allows peer-to-peer transactions without intermediaries." },
   { question: "How do I create a crypto wallet?", answer: "You can create a crypto wallet using software wallets, hardware wallets, or online wallets provided by exchanges." },
   { question: "What is Ethereum?", answer: "Ethereum is a decentralized blockchain platform that supports smart contracts and decentralized applications." },
@@ -17,20 +18,23 @@ const cryptoQAs: QA[] = [
   { question: "How does staking work?", answer: "Staking involves locking up crypto assets to support the network and earn rewards." },
   { question: "What are NFTs?", answer: "NFTs (Non-Fungible Tokens) are unique digital assets representing ownership of digital or physical items." },
   { question: "Can I recover lost crypto?", answer: "Lost crypto cannot be recovered unless you have your private keys or backup seed phrase." },
-  { question: "What is BlueVult?", answer: "BlueVult is a crypto platform providing trading, wallets, and portfolio management tools." },
-  { question: "How do I deposit funds on BlueVult?", answer: "You can deposit crypto or fiat using the 'Deposit' feature on your wallet dashboard." },
-  { question: "How do I withdraw funds from BlueVult?", answer: "Use the 'Withdraw' feature in your wallet to send funds to another wallet or bank account." },
+  { question: `What is ${platformName}?`, answer: `${platformName} is a crypto platform providing trading, wallets, and portfolio management tools.` },
+  { question: `How do I deposit funds on ${platformName}?`, answer: `You can deposit crypto or fiat using the 'Deposit' feature on your wallet dashboard.` },
+  { question: `How do I withdraw funds from ${platformName}?`, answer: `Use the 'Withdraw' feature in your wallet to send funds to another wallet or bank account.` },
   { question: "Is crypto trading risky?", answer: "Yes, crypto trading is volatile and can result in losses. Always trade responsibly." },
   { question: "What is market capitalization?", answer: "Market capitalization is the total value of a cryptocurrency calculated as price × circulating supply." },
   { question: "What are altcoins?", answer: "Altcoins are all cryptocurrencies other than Bitcoin." },
   { question: "What is liquidity?", answer: "Liquidity is how easily an asset can be bought or sold without affecting its price." },
   { question: "What are trading pairs?", answer: "Trading pairs allow you to trade one cryptocurrency for another on an exchange." },
   { question: "What is an ICO?", answer: "ICO (Initial Coin Offering) is a fundraising method for new crypto projects." },
-  { question: "How does BlueVult protect user data?", answer: "We use encryption, 2FA, and secure servers to ensure all user data is safe." },
+  { question: `How does ${platformName} protect user data?`, answer: "We use encryption, 2FA, and secure servers to ensure all user data is safe." },
   { question: "What is a blockchain node?", answer: "A node is a computer that participates in the blockchain network, validating transactions." },
 ];
 
 const FAQSection: React.FC = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+  const cryptoQAs = generateQAs(BlueVult);
   const [expanded, setExpanded] = useState<number | null>(null);
 
   return (

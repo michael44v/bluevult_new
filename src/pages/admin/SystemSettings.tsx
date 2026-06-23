@@ -23,6 +23,7 @@ const SystemSettings: React.FC = () => {
 
   // Security Settings
   const [require2FA, setRequire2FA] = useState(false);
+  const [force2FA, setForce2FA] = useState(false);
   const [kycRequired, setKycRequired] = useState(true);
   const [sessionTimeout, setSessionTimeout] = useState("30");
 
@@ -45,6 +46,7 @@ const SystemSettings: React.FC = () => {
           case "max_withdrawal": setMaxWithdrawal(s.setting_value); break;
           case "withdrawal_fee": setWithdrawalFee(s.setting_value); break;
           case "require_2fa": setRequire2FA(s.setting_value === "true"); break;
+          case "force_2fa": setForce2FA(s.setting_value === "true"); break;
           case "kyc_required": setKycRequired(s.setting_value === "true"); break;
           case "session_timeout": setSessionTimeout(s.setting_value); break;
           case "email_notifications": setEmailNotifications(s.setting_value === "true"); break;
@@ -66,6 +68,7 @@ const SystemSettings: React.FC = () => {
       max_withdrawal: maxWithdrawal,
       withdrawal_fee: withdrawalFee,
       require_2fa: require2FA.toString(),
+      force_2fa: force2FA.toString(),
       kyc_required: kycRequired.toString(),
       session_timeout: sessionTimeout,
       email_notifications: emailNotifications.toString(),
@@ -228,14 +231,26 @@ const SystemSettings: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-gray-800">
               <div>
-                <p className="text-white">Require 2FA for all users</p>
-                <p className="text-gray-400 text-sm">Force two-factor authentication</p>
+                <p className="text-white">Require 2FA (Security Question)</p>
+                <p className="text-gray-400 text-sm">Force users to answer a security question</p>
               </div>
               <button
                 onClick={() => setRequire2FA(!require2FA)}
                 className={`w-14 h-7 rounded-full transition ${require2FA ? "bg-green-600" : "bg-gray-700"}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full transition-transform ${require2FA ? "translate-x-8" : "translate-x-1"}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between py-3 border-b border-gray-800">
+              <div>
+                <p className="text-white">Force 2FA (Security Code)</p>
+                <p className="text-gray-400 text-sm">Require OTP code for login</p>
+              </div>
+              <button
+                onClick={() => setForce2FA(!force2FA)}
+                className={`w-14 h-7 rounded-full transition ${force2FA ? "bg-green-600" : "bg-gray-700"}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full transition-transform ${force2FA ? "translate-x-8" : "translate-x-1"}`} />
               </button>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-gray-800">

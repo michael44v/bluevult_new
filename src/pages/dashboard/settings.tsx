@@ -15,6 +15,11 @@ const UserProfile: React.FC = () => {
   () => localStorage.getItem("user_image_url") || ""
 );
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+  // Security Question
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
+  const [hasSecurityQuestion, setHasSecurityQuestion] = useState(false);
   const uid = localStorage.getItem("user_id"); // Example user_id
 
   // Password change
@@ -28,6 +33,25 @@ const UserProfile: React.FC = () => {
 
   const CLOUD_NAME = "dguvkirdr";
   const UPLOAD_PRESET = "kyc_upload";
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch("/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "sidebar", uid }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setHasSecurityQuestion(data.has_security_question);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchUserData();
+  }, [uid]);
 
   // Handle profile picture upload
   const handleProfilePicChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +93,7 @@ const UserProfile: React.FC = () => {
 
     // Send data to PHP backend
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -80,6 +104,8 @@ const UserProfile: React.FC = () => {
           notificationsEnabled,
           current_password: currentPassword,
           new_password: newPassword,
+          security_question: securityQuestion,
+          security_answer: securityAnswer,
         }),
       });
 
@@ -166,6 +192,37 @@ const UserProfile: React.FC = () => {
                   onChange={(e) => setName(e.target.value)}
                   className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#0a1120] dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
                 />
+              </div>
+
+              {/* Security Question Setup */}
+              <div className="space-y-3 mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                <h2 className="font-semibold text-gray-800 dark:text-white">Security Question (2FA)</h2>
+                {hasSecurityQuestion && (
+                  <p className="text-xs text-green-500 flex items-center gap-1">
+                    <FaCheckCircle /> Security question already set
+                  </p>
+                )}
+                <select
+                  value={securityQuestion}
+                  onChange={(e) => setSecurityQuestion(e.target.value)}
+                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#0a1120] dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+                >
+                  <option value="">Select a security question</option>
+                  <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                  <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+                  <option value="In what city were you born?">In what city were you born?</option>
+                  <option value="What is your favorite book?">What is your favorite book?</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Your Answer"
+                  value={securityAnswer}
+                  onChange={(e) => setSecurityAnswer(e.target.value)}
+                  className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-[#0a1120] dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+                <p className="text-xs text-gray-500">
+                  This will be used for verification if "Security Question 2FA" is enabled by admin.
+                </p>
               </div>
 
               <div className="relative">

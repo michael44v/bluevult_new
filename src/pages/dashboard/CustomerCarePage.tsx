@@ -45,7 +45,7 @@ const handleSend = () => {
   setMessages((prev) => [...prev, newMessage]);
   setInput("");
 
-  fetch("https://bluevult.com/api/ai_chat.php", {
+  fetch("/api/ai_chat.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message: newMessage.text }),
