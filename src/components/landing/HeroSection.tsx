@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, JSX } from "react";
 import { ArrowRight, Star, Search, ChevronUp, ChevronDown, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import MarketStatsBanner from "../ui/Marketstatsbanner";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 /* ─── Types ─── */
 interface Coin {
@@ -234,6 +235,9 @@ function CoinDetailDrawer({ coin, onClose }: { coin: Coin | null; onClose: () =>
 
 /* ─── Main Component ─── */
 export default function HeroSection(): JSX.Element {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+
   const [coins, setCoins]               = useState<Coin[]>([]);
   const [globalStats, setGlobalStats]   = useState<GlobalData | null>(null);
   const [featuredCoin, setFeaturedCoin] = useState<Coin | null>(null);

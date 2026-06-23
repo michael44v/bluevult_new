@@ -20,6 +20,7 @@ interface KycSubmission {
 
 const KycReview: React.FC = () => {
   const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
   const emailNotifications = settings.find(s => s.setting_key === "email_notifications")?.setting_value !== "false";
 
   const [kycSubmissions, setKycSubmissions] = useState<KycSubmission[]>([]);
@@ -35,7 +36,7 @@ const KycReview: React.FC = () => {
     setLoading(true);
     setKycError(false);
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_kyc_submissions" }),
@@ -61,7 +62,7 @@ const KycReview: React.FC = () => {
   // Approve / Reject API calls
   const updateKycStatus = async (submission: KycSubmission, status: "Approved" | "Rejected") => {
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,11 +85,11 @@ const KycReview: React.FC = () => {
 
         const emailMessage =
           status === "Approved"
-            ? `Hello ${submission.uname},<br><br>Your KYC verification has been approved. You now have full access to your BlueVult account.`
+            ? `Hello ${submission.uname},<br><br>Your KYC verification has been approved. You now have full access to your ${platformName} account.`
             : `Hello ${submission.uname},<br><br>Unfortunately, your KYC verification was rejected. Please review your submitted documents and try again.`;
 
         if (emailNotifications) {
-          fetch("https://bluevult.com/api/mail.php", {
+          fetch("/api/mail.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

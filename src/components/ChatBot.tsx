@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FaRobot, FaTimes, FaPaperPlane } from "react-icons/fa";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 interface Message {
   id: number;
@@ -9,6 +10,9 @@ interface Message {
 }
 
 const ChatBot = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -39,7 +43,7 @@ const ChatBot = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("https://bluevult.com/api/ai_chat.php", {
+      const res = await fetch("/api/ai_chat.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: newMessage.text }),

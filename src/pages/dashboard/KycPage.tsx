@@ -84,7 +84,7 @@ export default function KycPage() {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "get_kyc_status", uid: Number(uid) }),
@@ -181,7 +181,7 @@ const submitKyc = async () => {
     console.log("Uploaded URLs:", { img_one, img_two, img_three });
 
     // 2️⃣ Send only URLs + metadata to PHP
-    const res = await fetch("https://bluevult.com/api/index.php", {
+    const res = await fetch("/api/index.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -221,7 +221,7 @@ const submitKyc = async () => {
     setCountry("");
 
     if (emailNotifications) {
-      fetch('https://bluevult.com/api/mail.php', {
+      fetch('/api/mail.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

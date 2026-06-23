@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import './admincss.css';
 import AdminLayout from "./components/AdminLayout";
-import { FaSearch, FaEdit, FaBan, FaCheckCircle, FaEye } from "react-icons/fa";
+import { FaSearch, FaEdit, FaBan, FaCheckCircle, FaEye, FaBullhorn } from "react-icons/fa";
 import { useSystemSettings } from "@/hooks/useAdminData";
 
 
@@ -18,6 +18,9 @@ interface User {
   user_dob: string;
   user_address: string;
   us_citizen: string;
+  modal_title?: string;
+  modal_content?: string;
+  modal_active?: number;
 }
 
 const UsersManagement: React.FC = () => {
@@ -29,12 +32,16 @@ const UsersManagement: React.FC = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showModalConfig, setShowModalConfig] = useState<User | null>(null);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalContent, setModalContent] = useState("");
+  const [modalActive, setModalActive] = useState(false);
 
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_users" }),
@@ -74,10 +81,36 @@ const UsersManagement: React.FC = () => {
   };
 
 
+  const handleUpdateUserModal = async () => {
+    if (!showModalConfig) return;
+    try {
+      const res = await fetch("/api/admin-api.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          q: 'update_user_modal',
+          userId: showModalConfig.id,
+          title: modalTitle,
+          content: modalContent,
+          active: modalActive ? 1 : 0
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setUsers(prev => prev.map(u => u.id === showModalConfig.id ? { ...u, modal_title: modalTitle, modal_content: modalContent, modal_active: modalActive ? 1 : 0 } : u));
+        setShowModalConfig(null);
+        alert("User modal updated successfully");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update user modal");
+    }
+  };
+
   const toggleUserStatus = async (user: User) => {
     const newStatus = user.status === "suspended" ? "active" : "suspended";
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: 'toggle_status', userId: user.id, status: newStatus }),
@@ -96,11 +129,11 @@ const UsersManagement: React.FC = () => {
 
         const emailMessage =
           newStatus === "suspended"
-            ? "After our review, your BlueVult account wallet has been suspended."
-            : "Good news! Your BlueVult account wallet has been activated.";
+            ? `After our review, your ${platformName} account wallet has been suspended.`
+            : `Good news! Your ${platformName} account wallet has been activated.`;
 
         if (emailNotifications) {
-          fetch('https://bluevult.com/api/mail.php', {
+          fetch('/api/mail.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -227,6 +260,18 @@ const UsersManagement: React.FC = () => {
                         <FaEye />
                       </button>
                       <button
+                        onClick={() => {
+                          setShowModalConfig(user);
+                          setModalTitle(user.modal_title || "");
+                          setModalContent(user.modal_content || "");
+                          setModalActive(user.modal_active === 1);
+                        }}
+                        className="p-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition"
+                        title="Configure Modal"
+                      >
+                        <FaBullhorn />
+                      </button>
+                      <button
                         className={`p-2 rounded-lg transition ${
                           user.status === "suspended"
                             ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
@@ -247,6 +292,56 @@ const UsersManagement: React.FC = () => {
         </div>
 
         {/* User Details Modal */}
+        {/* Modal Config Modal */}
+        {showModalConfig && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-[#1a1d2a] rounded-2xl p-6 max-w-lg w-full border border-gray-800">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">Configure User Modal</h3>
+                <button onClick={() => setShowModalConfig(null)} className="text-gray-400 hover:text-white">✕</button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Modal Title</label>
+                  <input
+                    type="text"
+                    value={modalTitle}
+                    onChange={(e) => setModalTitle(e.target.value)}
+                    className="w-full px-4 py-2 bg-[#0f111b] border border-gray-700 rounded-lg text-white"
+                    placeholder="Important Notice"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Modal Content</label>
+                  <textarea
+                    value={modalContent}
+                    onChange={(e) => setModalContent(e.target.value)}
+                    className="w-full px-4 py-2 bg-[#0f111b] border border-gray-700 rounded-lg text-white h-32"
+                    placeholder="Enter message for user..."
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-white text-sm">Activate Modal</p>
+                  <button
+                    onClick={() => setModalActive(!modalActive)}
+                    className={`w-12 h-6 rounded-full transition ${modalActive ? "bg-green-600" : "bg-gray-700"}`}
+                  >
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${modalActive ? "translate-x-7" : "translate-x-1"}`} />
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleUpdateUserModal}
+                  className="w-full py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition mt-4"
+                >
+                  Save Configuration
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedUser && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-[#1a1d2a] rounded-2xl p-6 max-w-lg w-full border border-gray-800">

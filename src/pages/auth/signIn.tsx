@@ -17,6 +17,11 @@ const SignIn = () => {
 
   const { data: settings = [] } = useSystemSettings();
   const require2FA = settings.find(s => s.setting_key === "require_2fa")?.setting_value === "true";
+  const force2FA = settings.find(s => s.setting_key === "force_2fa")?.setting_value === "true";
+
+  const [showSecurityQuestion, setShowSecurityQuestion] = useState(false);
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
 
   // Handle input change
   const handleChange = (
@@ -52,7 +57,7 @@ const SignIn = () => {
     }
 
     try {
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,6 +66,7 @@ const SignIn = () => {
           q: "signin",
           email: form.email,
           password: form.password,
+          security_answer: securityAnswer,
         }),
       });
 
@@ -73,8 +79,20 @@ const SignIn = () => {
       }
 
       // ✅ LOGIN SUCCESS
-      if (require2FA) {
-        setError("Two-Factor Authentication (2FA) is mandatory for all accounts. Please contact support via live chat or email to verify your 2FA setup and complete your sign-in.");
+      if (require2FA && !showSecurityQuestion) {
+        if (data.security_question) {
+          setSecurityQuestion(data.security_question);
+          setShowSecurityQuestion(true);
+          setCaptchaStatus(false); // Reset captcha for security answer step
+          return;
+        } else {
+            setError("Two-Factor Authentication (Security Question) is mandatory. Please contact support to set up your security question.");
+            return;
+        }
+      }
+
+      if (force2FA) {
+        setError("Two-Factor Authentication (Security Code) is mandatory. Please contact support via live chat or email to verify your 2FA setup and complete your sign-in.");
         return;
       }
 
@@ -132,45 +150,72 @@ const SignIn = () => {
           )}
 
           <p className="text-slate-400 mb-8">
-            Enter your credentials to continue
+            {showSecurityQuestion ? "Answer your security question to continue" : "Enter your credentials to continue"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* EMAIL */}
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
-                           text-white placeholder-slate-500 focus:outline-none
-                           focus:ring-2 focus:ring-emerald-500/40"
-                placeholder="you@example.com"
-              />
-            </div>
+            {!showSecurityQuestion ? (
+              <>
+                {/* EMAIL */}
+                <div>
+                  <label className="block text-sm text-slate-300 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+                               text-white placeholder-slate-500 focus:outline-none
+                               focus:ring-2 focus:ring-emerald-500/40"
+                    placeholder="you@example.com"
+                  />
+                </div>
 
-            {/* PASSWORD */}
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
-                           text-white placeholder-slate-500 focus:outline-none
-                           focus:ring-2 focus:ring-emerald-500/40"
-                placeholder="••••••••"
-              />
-            </div>
+                {/* PASSWORD */}
+                <div>
+                  <label className="block text-sm text-slate-300 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+                               text-white placeholder-slate-500 focus:outline-none
+                               focus:ring-2 focus:ring-emerald-500/40"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm text-slate-300 mb-2 font-bold">
+                  {securityQuestion}
+                </label>
+                <input
+                  type="text"
+                  value={securityAnswer}
+                  onChange={(e) => setSecurityAnswer(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+                             text-white placeholder-slate-500 focus:outline-none
+                             focus:ring-2 focus:ring-emerald-500/40"
+                  placeholder="Your answer"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecurityQuestion(false)}
+                  className="text-xs text-emerald-400 mt-2 hover:underline"
+                >
+                  Back to login
+                </button>
+              </div>
+            )}
 
             <div className="flex items-center justify-between text-sm">
               <Link

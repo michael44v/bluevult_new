@@ -61,7 +61,7 @@ export default function ConnectWalletPage() {
       setStatus("Connecting..."); // show loading status
 
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export default function ConnectWalletPage() {
           setStatus(`Wallet "${activeWallet.name}" connected successfully.`);
 
     if (emailNotifications) {
-      fetch('https://bluevult.com/api/mail.php', {
+      fetch('/api/mail.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

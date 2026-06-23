@@ -34,7 +34,7 @@ const TransactionHistory: React.FC = () => {
       }
 
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "transactions", uid: userId }),

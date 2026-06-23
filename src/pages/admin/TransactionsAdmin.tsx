@@ -31,7 +31,7 @@ const TransactionsAdmin: React.FC = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "admin_get_transactions" }),
@@ -53,7 +53,7 @@ const TransactionsAdmin: React.FC = () => {
   // Handle Approve / Decline
   const handleTransactionAction = async (t_id: string, action: "approve_tx" | "decline_tx") => {
     try {
-      const res = await fetch("https://bluevult.com/api/admin-api.php", {
+      const res = await fetch("/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: action, txn_id: t_id }),
@@ -243,7 +243,7 @@ const TransactionsAdmin: React.FC = () => {
                         <button
                             onClick={async () => {
                                 try {
-                                    const res = await fetch("https://bluevult.com/api/admin-api.php", {
+                                    const res = await fetch("/api/admin-api.php", {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({

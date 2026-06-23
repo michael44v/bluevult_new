@@ -1,8 +1,12 @@
 
 import Footer from "@/components/landing/Footer";
 import Header from "@/components/landing/Header";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 const About = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100">
         <Header />

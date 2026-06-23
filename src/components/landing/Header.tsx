@@ -173,7 +173,7 @@ export default function Header(): JSX.Element {
               <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </div>
             <span className="text-base md:text-lg font-bold" style={{ color: "#eaecef" }}>
-              {platformName}
+              BlueVult
             </span>
           </Link>
 

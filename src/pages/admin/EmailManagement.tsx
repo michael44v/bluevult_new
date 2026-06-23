@@ -20,7 +20,7 @@ const EmailManagement: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/admin-api.php", {
+        const res = await fetch("/api/admin-api.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "fetch_users" }),
@@ -58,7 +58,7 @@ const EmailManagement: React.FC = () => {
     const userName = user ? user.name : "User";
 
     try {
-      const res = await fetch("https://bluevult.com/api/mail.php", {
+      const res = await fetch("/api/mail.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -23,3 +23,10 @@ CREATE TABLE `user_positions` (
 -- Note: Use with caution if existing data is present.
 -- In index.php, we assume user_balance is a decimal.
 ALTER TABLE `user_balances` MODIFY `user_balance` DECIMAL(20, 2) NOT NULL;
+
+-- New columns for custom user modal and security features
+ALTER TABLE `user_details` ADD COLUMN `modal_title` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `user_details` ADD COLUMN `modal_content` TEXT DEFAULT NULL;
+ALTER TABLE `user_details` ADD COLUMN `modal_active` TINYINT(1) DEFAULT 0;
+ALTER TABLE `user_details` ADD COLUMN `security_question` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `user_details` ADD COLUMN `security_answer` VARCHAR(255) DEFAULT NULL;

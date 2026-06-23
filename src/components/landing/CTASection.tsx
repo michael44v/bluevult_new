@@ -1,8 +1,12 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSystemSettings } from "@/hooks/useAdminData";
 
 const CTASection = () => {
+  const { data: settings = [] } = useSystemSettings();
+  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+
   return (
     <section className="py-20 relative overflow-hidden">
       {/* Background Gradient */}

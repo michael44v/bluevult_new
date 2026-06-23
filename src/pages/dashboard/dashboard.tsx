@@ -4,6 +4,7 @@ import TradingViewWidget from "./dashboardWidgets/bitcoinChart";
 import Footer from "@/components/landing/Footer";
 import CryptoAsset from "@/components/dashboard/CryptoAsset";
 import TopBar from "@/components/dashboard/TopBar";
+import UserModal from "@/components/dashboard/UserModal";
 
 import { Link, useNavigate } from "react-router-dom";
 
@@ -171,6 +172,8 @@ const Dashboard: React.FC = () => {
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
   const [selectedAssetName, setSelectedAssetName] = useState("");
   const [wsConnected, setWsConnected] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userModalData, setUserModalData] = useState({ title: "", content: "" });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [portfolioData, setPortfolioData] = useState([
     { name: "BTC", value: 55 },
@@ -296,19 +299,30 @@ const Dashboard: React.FC = () => {
 
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "sidebar", uid }),
+        });
+        const data = await res.json();
+        if (data.success && data.modal_active === 1) {
+          setUserModalData({ title: data.modal_title, content: data.modal_content });
+          setShowUserModal(true);
+        }
+
+        const resDash = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "dashboard", uid }),
         });
-        const data = await res.json();
-        setStats(Array.isArray(data.wallets) ? data.wallets : []);
+        const dataDash = await resDash.json();
+        setStats(Array.isArray(dataDash.wallets) ? dataDash.wallets : []);
 
         // Detect new transactions on polling refresh
-        if (Array.isArray(data.transactions)) {
+        if (Array.isArray(dataDash.transactions)) {
           setTransactions(prev => {
             const prevIds = new Set(prev.map(t => t.id));
-            const incoming = data.transactions as Transaction[];
+            const incoming = dataDash.transactions as Transaction[];
             const newIds = incoming.filter(t => !prevIds.has(t.id)).map(t => t.id);
             if (newIds.length > 0) {
               setNewTxIds(new Set(newIds));
@@ -327,7 +341,7 @@ const Dashboard: React.FC = () => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "get_notifications", uid }),
@@ -377,7 +391,7 @@ const Dashboard: React.FC = () => {
   const markNotificationsSeen = async () => {
     setShowNotifications(!showNotifications);
     if (!showNotifications && notifications.some(n => n.is_notified === 0)) {
-      await fetch("https://bluevult.com/api/index.php", {
+      await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "mark_notifications_seen", uid }),
@@ -700,6 +714,15 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Custom User Modal from Admin */}
+      {showUserModal && (
+        <UserModal
+          title={userModalData.title}
+          content={userModalData.content}
+          onClose={() => setShowUserModal(false)}
+        />
+      )}
 
       {/* Chart Modal */}
       {isChartModalOpen && (

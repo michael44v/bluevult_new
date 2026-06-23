@@ -61,7 +61,7 @@ const AppContent = () => {
     };
   }, [resetTimer]);
 
-  if (isMaintenanceMode) {
+  if (isMaintenanceMode && !window.location.pathname.startsWith("/admin")) {
     return <Maintenance />;
   }
 

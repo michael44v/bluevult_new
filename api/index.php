@@ -43,6 +43,14 @@ $req = isset($input['q']) ? $input['q'] : '';
 switch($req) {
 
                         case 'signup':
+                            // Check if registration is enabled
+                            $reg_check = mysqli_query($conn, "SELECT setting_value FROM system_settings WHERE setting_key='registration_enabled'");
+                            $reg_res = mysqli_fetch_assoc($reg_check);
+                            if ($reg_res && $reg_res['setting_value'] === 'false') {
+                                echo json_encode(['success' => false, 'message' => 'User registration is currently disabled by the administrator.']);
+                                exit();
+                            }
+
                             // Get POST data safely
                             $fname = sanitizeInput($input['username'] ?? '');
                             $email = sanitizeInput($input['email'] ?? '');
@@ -176,6 +184,15 @@ $stmt->close();
 
                 while($read=$result->fetch_assoc()) {
                     $user_id = $read['user_id'];
+                    $sec_q = $read['security_question'];
+                    $sec_a = $read['security_answer'];
+
+                    if (isset($input['security_answer'])) {
+                        if (strtolower(trim($input['security_answer'])) !== strtolower(trim($sec_a))) {
+                            echo json_encode(['success' => false, 'message' => 'Incorrect security answer']);
+                            exit();
+                        }
+                    }
 
                     // Notification for login
                     $notif_title = "New Login Detected";
@@ -191,7 +208,7 @@ $stmt->close();
                             exit();
                         }
                     else {
-                         echo json_encode(['success' => true, 'message' => 'success ','user_id' => $user_id]);
+                         echo json_encode(['success' => true, 'message' => 'success ','user_id' => $user_id, 'security_question' => $sec_q]);
                         exit();
                     }
                 }
@@ -207,7 +224,7 @@ $stmt->close();
         case "sidebar":
                  $get_user = sanitizeInput($input['uid'] ?? '');
                   $check = "
-                    SELECT u.user_name, u.user_email, u.user_picture, u.user_status, COALESCE(b.user_balance, 0) as balance
+                    SELECT u.user_name, u.user_email, u.user_picture, u.user_status, u.modal_title, u.modal_content, u.modal_active, u.security_question, COALESCE(b.user_balance, 0) as balance
                     FROM user_details u
                     LEFT JOIN user_balances b ON u.user_id = b.user_id
                     WHERE u.user_id='$get_user'
@@ -228,6 +245,10 @@ $stmt->close();
                             'user_email' => $user_email,
                             'profile' => $dp,
                             'user_status' => $read['user_status'],
+                            'modal_title' => $read['modal_title'],
+                            'modal_content' => $read['modal_content'],
+                            'modal_active' => (int)$read['modal_active'],
+                            'has_security_question' => !empty($read['security_question']),
                             'balance' => (float)$read['balance'],
                         ]);
 
@@ -667,6 +688,8 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         $profile_pic = $input['profile_pic'] ?? null;
         $current_password = $input['current_password'] ?? null;
         $new_password = $input['new_password'] ?? null;
+        $security_question = $input['security_question'] ?? null;
+        $security_answer = $input['security_answer'] ?? null;
 
         if (!$user_id) {
             echo json_encode(['success' => false, 'message' => 'User ID missing']);
@@ -718,6 +741,14 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
             $updates[] = "user_name = ?";
             $types .= "s";
             $params[] = $name;
+        }
+
+        if (!empty($security_question) && !empty($security_answer)) {
+            $updates[] = "security_question = ?";
+            $updates[] = "security_answer = ?";
+            $types .= "ss";
+            $params[] = $security_question;
+            $params[] = $security_answer;
         }
 
         if (!empty($updates)) {

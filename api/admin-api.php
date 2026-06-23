@@ -658,6 +658,9 @@ echo json_encode([
             u.user_email, 
             u.kyc, 
             u.user_status,
+            u.modal_title,
+            u.modal_content,
+            u.modal_active,
             COALESCE(b.user_balance, 0) AS balance,       -- get balance from user_balance table
             u.user_reg_date, 
             u.user_region
@@ -774,6 +777,19 @@ echo json_encode([
         echo json_encode(["success" => $userId]);
         break;
 
+    case 'update_user_modal':
+        $userId = $input['userId'] - 734350;
+        $title = $input['title'] ?? '';
+        $content = $input['content'] ?? '';
+        $active = (int)($input['active'] ?? 0);
+
+        $stmt = $db->prepare("UPDATE user_details SET modal_title = ?, modal_content = ?, modal_active = ? WHERE user_id = ?");
+        $stmt->bind_param("ssii", $title, $content, $active, $userId);
+        $success = $stmt->execute();
+
+        echo json_encode(['success' => $success]);
+        break;
+
     case 'admin_get_settings':
         $res = $db->query("SELECT * FROM system_settings");
         $settings = [];
@@ -788,7 +804,7 @@ echo json_encode([
         $allowed_keys = [
             'platform_name', 'maintenance_mode', 'registration_enabled',
             'min_deposit', 'max_deposit', 'min_withdrawal', 'max_withdrawal',
-            'withdrawal_fee', 'require_2fa', 'kyc_required', 'session_timeout',
+            'require_2fa', 'force_2fa', 'kyc_required', 'session_timeout',
             'email_notifications', 'sms_notifications', 'admin_alerts'
         ];
 
