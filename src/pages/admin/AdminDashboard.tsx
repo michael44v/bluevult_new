@@ -101,7 +101,7 @@ const AdminDashboard: React.FC = () => {
   const { data: kycDataRaw } = useKYCSubmissions();
   const updateTransaction = useUpdateTransactionStatus();
 
-  const statsData = stats?.data ?? {
+  const statsData = stats ?? {
     totalUsers: 0,
     pendingKYC: 0,
     totalDeposits: 0,
@@ -110,12 +110,12 @@ const AdminDashboard: React.FC = () => {
 
   /* ================= Revenue ================= */
   const revenueData = useMemo(() => {
-    if (!revenueRaw || !Array.isArray(revenueRaw.data?.chart))
+    if (!revenueRaw || !Array.isArray(revenueRaw?.chart))
       return fillLast7Days([]);
 
     let cumulative = 0;
-    const sorted = revenueRaw.data.chart
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const sorted = revenueRaw.chart
+      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map((item: any) => {
         cumulative += Number(item.value);
         return { date: item.date, value: cumulative };
@@ -126,7 +126,7 @@ const AdminDashboard: React.FC = () => {
 
   /* ================= KYC ================= */
   const kycStatusData = useMemo(() => {
-    if (!kycDataRaw?.data) {
+    if (!kycDataRaw) {
       return [
         { name: "Approved", value: 0, color: "#22c55e" },
         { name: "Pending", value: 0, color: "#eab308" },
@@ -134,7 +134,7 @@ const AdminDashboard: React.FC = () => {
       ];
     }
 
-    const { approved, pending, declined } = kycDataRaw.data;
+    const { approved, pending, declined } = kycDataRaw;
     const total = approved + pending + declined || 1;
 
     return [
@@ -144,7 +144,7 @@ const AdminDashboard: React.FC = () => {
     ];
   }, [kycDataRaw]);
 
-  const recentActivity = (transactions?.data || []).slice(0, 5).map((t: any) => ({
+  const recentActivity = (transactions || []).slice(0, 5).map((t: any) => ({
     id: t.id,
     action: t.type === "Deposit" ? "Deposit received" : "Withdrawal requested",
     user: t.userName || `User #${t.userId}`,
@@ -153,7 +153,7 @@ const AdminDashboard: React.FC = () => {
     type: t.type.toLowerCase(),
   }));
 
-  const pendingWithdrawalsList = (withdrawals?.data || [])
+  const pendingWithdrawalsList = (withdrawals || [])
     .filter((w: any) => w.trans_stat === "Pending")
     .slice(0, 5);
 

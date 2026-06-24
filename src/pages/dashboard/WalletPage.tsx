@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FaWallet, FaArrowDown, FaCopy, FaBars, FaMoon, FaSun, FaBell, FaUserCircle } from "react-icons/fa";
 import QRCode from "react-qr-code";
 import { useNavigate } from "react-router-dom";
+import { submitUserDeposit } from "@/lib/api/dashboardService";
 
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
@@ -138,20 +139,13 @@ export default function DepositPage() {
       }
 
       // 4️⃣ Send to backend: original crypto + BTC + USD
-      const res = await fetch("/api/index.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          q: "payment",
+      const data = await submitUserDeposit({
           user_id: userId,
           crypto: selected.symbol,
           amount_crypto: parseFloat(cryptoAmount),
           amount_usd: parseFloat(usdAmount),
           amount_btc: amountBTC.toFixed(8),
-        }),
       });
-
-      const data = await res.json();
 
       if (data.status === "success") {
         document.body.style.transition = "opacity 1.5s";

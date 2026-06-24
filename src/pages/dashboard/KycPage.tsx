@@ -4,6 +4,7 @@ import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
 import { useNavigate } from "react-router-dom";
 import { useSystemSettings } from "@/hooks/useAdminData";
+import { fetchUserKycStatus, submitUserKyc } from "@/lib/api/dashboardService";
 
 import {
   FaBars,
@@ -84,15 +85,7 @@ export default function KycPage() {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "get_kyc_status", uid: Number(uid) }),
-        });
-        
-        if (!res.ok) throw new Error('Failed to fetch status');
-        
-        const data = await res.json();
+        const data = await fetchUserKycStatus(uid);
         
         if (data.kyc === "verified") {
           setKycStatus("verified");
@@ -181,26 +174,15 @@ const submitKyc = async () => {
     console.log("Uploaded URLs:", { img_one, img_two, img_three });
 
     // 2️⃣ Send only URLs + metadata to PHP
-    const res = await fetch("/api/index.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        q: "submit_kyc_urls",
+    const data = await submitUserKyc({
         uid,
         idType,
         country,
         img_one,
         img_two,
-        img_three,uname
-      }),
+        img_three,
+        uname
     });
-
-    const text = await res.text();
-    console.log("Raw response:", text);
-
-    if (!text) throw new Error("Empty server response");
-
-    const data = JSON.parse(text);
 
     if (data.status !== "success") {
       throw new Error(data.message || "KYC submission failed");

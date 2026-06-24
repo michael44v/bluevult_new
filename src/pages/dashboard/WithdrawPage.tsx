@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FaWallet, FaArrowUp, FaBars, FaMoon, FaSun, FaBell, FaUserCircle ,FaBitcoin,FaEthereum } from "react-icons/fa";
 import { SiTether } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
+import { fetchUserKycStatus, fetchUserSidebarData, fetchUserDashboardData, submitUserWithdrawal, fetchUserCryptoBalances } from "@/lib/api/dashboardService";
 
 import Sidebar from "./dashboardWidgets/Sidebar";
 import Footer from "@/components/landing/Footer";
@@ -90,21 +91,11 @@ export default function WithdrawPage() {
 
       try {
         // 🔹 Check KYC
-        const kycRes = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "get_kyc_status", uid }),
-        });
-        const kycData = await kycRes.json();
+        const kycData = await fetchUserKycStatus(uid);
         setKycStatus(kycData.kyc);
 
         // 🔹 Fetch user balances
-        const balRes = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "sidebar", uid }),
-        });
-        const balData = await balRes.json();
+        const balData = await fetchUserSidebarData(uid);
         const totalBalance = Number(balData.balance) || 0;
 
         // Save the USD balance from sidebar directly into state
@@ -115,12 +106,7 @@ export default function WithdrawPage() {
         }
 
         // 🔹 Fetch specific crypto balances
-        const cryptoBalRes = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "get_balance", uid }),
-        });
-        const cryptoBalData = await cryptoBalRes.json();
+        const cryptoBalData = await fetchUserCryptoBalances(uid);
 
         // Update wallets with user balance
         wallets.forEach((w) => {
@@ -162,19 +148,13 @@ export default function WithdrawPage() {
   const confirmWithdraw = async () => {
     if (!uid) return;
     try {
-      const res = await fetch("/api/index.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          q: "withdraw",
+      const data = await submitUserWithdrawal({
           uid,
           crypto: selected.symbol,
           amount: amountCrypto,
           amount_usd: amountUSD,
           address,
-        }),
       });
-      const data = await res.json();
 
       if (data.status === "success") {
         document.body.style.transition = "opacity 1.5s";

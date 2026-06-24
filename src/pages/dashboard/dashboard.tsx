@@ -7,6 +7,12 @@ import TopBar from "@/components/dashboard/TopBar";
 import UserModal from "@/components/dashboard/UserModal";
 
 import { Link, useNavigate } from "react-router-dom";
+import {
+  fetchUserSidebarData,
+  fetchUserDashboardData,
+  fetchUserNotifications,
+  markUserNotificationsSeen
+} from "@/lib/api/dashboardService";
 
 import {
   FaBell,
@@ -299,23 +305,13 @@ const Dashboard: React.FC = () => {
 
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "sidebar", uid }),
-        });
-        const data = await res.json();
+        const data = await fetchUserSidebarData(uid);
         if (data.success && data.modal_active === 1) {
           setUserModalData({ title: data.modal_title, content: data.modal_content });
           setShowUserModal(true);
         }
 
-        const resDash = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "dashboard", uid }),
-        });
-        const dataDash = await resDash.json();
+        const dataDash = await fetchUserDashboardData(uid);
         setStats(Array.isArray(dataDash.wallets) ? dataDash.wallets : []);
 
         // Detect new transactions on polling refresh
@@ -339,20 +335,15 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    const fetchNotifications = async () => {
+    const fetchNotificationsData = async () => {
       try {
-        const res = await fetch("/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "get_notifications", uid }),
-        });
-        const data = await res.json();
+        const data = await fetchUserNotifications(uid);
         if (data.success) setNotifications(data.notifications);
       } catch {}
     };
 
     fetchDashboard();
-    fetchNotifications();
+    fetchNotificationsData();
 
     // Poll transactions every 30s
     const txInterval = setInterval(fetchDashboard, 30000);
@@ -388,14 +379,10 @@ const Dashboard: React.FC = () => {
     localStorage.setItem("theme", newDark ? "dark" : "light");
   };
 
-  const markNotificationsSeen = async () => {
+  const handleMarkNotificationsSeen = async () => {
     setShowNotifications(!showNotifications);
     if (!showNotifications && notifications.some(n => n.is_notified === 0)) {
-      await fetch("/api/index.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: "mark_notifications_seen", uid }),
-      });
+        await markUserNotificationsSeen(uid);
     }
   };
 
