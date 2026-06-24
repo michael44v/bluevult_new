@@ -33,7 +33,7 @@ document.body.style.transition = "opacity 0.5s";
       document.body.style.opacity = "1";
     const verifyEmail = async () => {
       try {
-        const response = await fetch("/api/index.php", {
+        const response = await fetch("https://bluevult.com/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "verify_reset_token", email }),
@@ -89,7 +89,7 @@ document.body.style.transition = "opacity 0.5s";
     setLoading(true);
 
     try {
-      const response = await fetch("/api/index.php", {
+      const response = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

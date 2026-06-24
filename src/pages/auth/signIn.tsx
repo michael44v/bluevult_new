@@ -23,6 +23,11 @@ const SignIn = () => {
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
 
+  const [showOTP, setShowOTP] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [tempUserId, setTempUserId] = useState<string | null>(null);
+
   // Handle input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -53,6 +58,27 @@ const SignIn = () => {
 
     if (!captchaStatus) {
       setError("Please complete the captcha");
+      return;
+    }
+
+    if (showOTP) {
+      try {
+        const verifyRes = await fetch("https://bluevult.com/api/otp-verify.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uid: tempUserId, otp: otpCode }),
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyData.success) {
+          setMessage("Verification successful");
+          localStorage.setItem("user_id", tempUserId!);
+          setTimeout(() => navigate("/dashboard"), 800);
+        } else {
+          setError(verifyData.message || "Invalid security code");
+        }
+      } catch (err) {
+        setError("Verification failed. Please try again.");
+      }
       return;
     }
 
@@ -91,8 +117,28 @@ const SignIn = () => {
         }
       }
 
-      if (force2FA) {
-        setError("Two-Factor Authentication (Security Code) is mandatory. Please contact support via live chat or email to verify your 2FA setup and complete your sign-in.");
+      if (force2FA && !showOTP) {
+        setTempUserId(data.user_id);
+        setIsSendingOTP(true);
+        try {
+          const otpRes = await fetch("https://bluevult.com/api/send-otp.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid: data.user_id }),
+          });
+          const otpData = await otpRes.json();
+          if (otpData.success) {
+            setShowOTP(true);
+            setCaptchaStatus(false);
+            setMessage("Security code sent to your email.");
+          } else {
+            setError(otpData.error || "Failed to send security code.");
+          }
+        } catch (err) {
+          setError("Failed to send security code. Please try again.");
+        } finally {
+          setIsSendingOTP(false);
+        }
         return;
       }
 
@@ -150,11 +196,39 @@ const SignIn = () => {
           )}
 
           <p className="text-slate-400 mb-8">
-            {showSecurityQuestion ? "Answer your security question to continue" : "Enter your credentials to continue"}
+            {showOTP
+              ? "Enter the 6-digit code sent to your email"
+              : showSecurityQuestion
+                ? "Answer your security question to continue"
+                : "Enter your credentials to continue"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {!showSecurityQuestion ? (
+            {showOTP ? (
+              <div>
+                <label className="block text-sm text-slate-300 mb-2 font-bold">
+                  Security Code
+                </label>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  required
+                  maxLength={6}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
+                             text-white placeholder-slate-500 focus:outline-none
+                             focus:ring-2 focus:ring-emerald-500/40 text-center tracking-[1em] text-2xl"
+                  placeholder="000000"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOTP(false)}
+                  className="text-xs text-emerald-400 mt-2 hover:underline"
+                >
+                  Back to login
+                </button>
+              </div>
+            ) : !showSecurityQuestion ? (
               <>
                 {/* EMAIL */}
                 <div>

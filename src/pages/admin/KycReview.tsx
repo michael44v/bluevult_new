@@ -36,7 +36,7 @@ const KycReview: React.FC = () => {
     setLoading(true);
     setKycError(false);
     try {
-      const res = await fetch("/api/admin-api.php", {
+      const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_kyc_submissions" }),
@@ -62,7 +62,7 @@ const KycReview: React.FC = () => {
   // Approve / Reject API calls
   const updateKycStatus = async (submission: KycSubmission, status: "Approved" | "Rejected") => {
     try {
-      const res = await fetch("/api/admin-api.php", {
+      const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,7 +89,7 @@ const KycReview: React.FC = () => {
             : `Hello ${submission.uname},<br><br>Unfortunately, your KYC verification was rejected. Please review your submitted documents and try again.`;
 
         if (emailNotifications) {
-          fetch("/api/mail.php", {
+          fetch("https://bluevult.com/api/mail.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

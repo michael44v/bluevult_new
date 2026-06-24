@@ -18,7 +18,7 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
     const fetchNotifications = async () => {
       if (!uid) return;
       try {
-        const res = await fetch("/api/index.php", {
+        const res = await fetch("https://bluevult.com/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "get_notifications", uid }),
@@ -47,7 +47,7 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
   const markNotificationsSeen = async () => {
     setShowNotifications(!showNotifications);
     if (!showNotifications && notifications.some(n => n.is_notified === 0)) {
-       await fetch("/api/index.php", {
+       await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "mark_notifications_seen", uid }),
@@ -58,7 +58,7 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
   const clearNotifications = async () => {
     if (!uid) return;
     try {
-      const res = await fetch("/api/index.php", {
+      const res = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "clear_notifications", uid }),

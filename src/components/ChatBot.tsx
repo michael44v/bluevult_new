@@ -43,7 +43,7 @@ const ChatBot = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/ai_chat.php", {
+      const res = await fetch("https://bluevult.com/api/ai_chat.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: newMessage.text }),

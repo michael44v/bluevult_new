@@ -57,7 +57,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onClose }) => {
   );
 
   return (
-    <aside className="w-64 min-h-screen p-4 bg-[#0a0f1f] border-r border-gray-800 flex flex-col gap-4">
+    <aside className="w-64 h-screen overflow-y-auto p-4 bg-[#0a0f1f] border-r border-gray-800 flex flex-col gap-4">
       {/* Brand */}
       <div className="flex items-center gap-2 px-2">
         <FaShieldAlt className="text-red-500 text-2xl" />

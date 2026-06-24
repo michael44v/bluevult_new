@@ -29,7 +29,7 @@ const TradingPage: React.FC = () => {
     const uid = localStorage.getItem("user_id");
     if (!uid) return;
     try {
-      const res = await fetch("/api/index.php", {
+      const res = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         body: JSON.stringify({ q: "sidebar", uid }),
       });
@@ -90,7 +90,7 @@ const TradingPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/index.php", {
+      const res = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         body: JSON.stringify({
           q: "open_position",
@@ -127,19 +127,16 @@ const TradingPage: React.FC = () => {
         <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300 max-w-full">
           <TopBar title={`${asset.name}/USDT Spot`} onSidebarToggle={() => setSidebarOpen(true)} />
 
-          <div className="pt-20 px-2 pb-4 flex flex-col xl:flex-row gap-2 h-[calc(100vh-1rem)]">
+          <div className="pt-20 px-2 pb-4 flex flex-col xl:flex-row gap-2 h-auto min-h-[calc(100vh-1rem)] overflow-y-auto">
 
-            {/* Left: Order Book & Trades */}
+            {/* Left: Order Book */}
             <div className="w-full xl:w-72 flex flex-col gap-2 shrink-0">
-                <div className="flex-1 min-h-[300px]">
+                <div className="flex-1 min-h-[500px]">
                     <OrderBook symbol={asset.symbol} price={price} />
-                </div>
-                <div className="h-64">
-                    <RecentTrades price={price} />
                 </div>
             </div>
 
-            {/* Center: Chart */}
+            {/* Center: Chart & Positions */}
             <div className="flex-1 flex flex-col gap-2 min-w-0">
                 {/* Symbol Info Bar */}
                 <div className="bg-[#0a1120] p-4 rounded-xl border border-white/5 flex items-center gap-8 overflow-x-auto scrollbar-hide">
@@ -171,14 +168,30 @@ const TradingPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 bg-[#0a1120] rounded-xl shadow-lg overflow-hidden border border-white/5 relative">
+                <div className="h-[500px] bg-[#0a1120] rounded-xl shadow-lg overflow-hidden border border-white/5 relative">
                   <TradingViewWidget symbol={asset.type === "Crypto" ? `${asset.symbol}USDT` : asset.symbol} />
+                </div>
+
+                {/* Positions Section */}
+                <div className="bg-[#0a1120] rounded-xl border border-white/5 overflow-hidden">
+                    <div className="flex border-b border-white/5 bg-[#1a1d2a]">
+                        <button className="px-6 py-3 text-xs font-bold text-blue-500 border-b-2 border-blue-500">Open Positions</button>
+                        <button className="px-6 py-3 text-xs font-bold text-gray-500 hover:text-gray-300">Order History</button>
+                        <button className="px-6 py-3 text-xs font-bold text-gray-500 hover:text-gray-300">Trade History</button>
+                    </div>
+                    <div className="p-8 text-center">
+                        <div className="flex flex-col items-center gap-2 text-gray-600">
+                            <Activity className="w-12 h-12 opacity-20" />
+                            <p className="text-sm">No open positions</p>
+                            <button onClick={() => navigate("/positions")} className="text-xs text-blue-500 hover:underline mt-2">View all history</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Right: Trading Panel */}
+            {/* Right: Trading Panel & Recent Trades */}
             <div className="w-full xl:w-80 flex flex-col gap-2 shrink-0">
-              <div className="bg-[#0a1120] p-5 rounded-xl shadow-lg border border-white/5 flex flex-col h-full">
+              <div className="bg-[#0a1120] p-5 rounded-xl shadow-lg border border-white/5 flex flex-col">
                 {/* Buy/Sell Tabs */}
                 <div className="flex mb-6 bg-[#1a1d2a] p-1 rounded-lg">
                   <button
@@ -296,6 +309,11 @@ const TradingPage: React.FC = () => {
                     <Info className="w-4 h-4 text-blue-500 shrink-0" />
                     <p className="text-[10px] text-gray-400">Trading involves significant risk. Always use stop-losses to protect your capital.</p>
                 </div>
+              </div>
+
+              {/* Recent Trades at the bottom of right column */}
+              <div className="h-[400px]">
+                <RecentTrades price={price} />
               </div>
             </div>
           </div>
