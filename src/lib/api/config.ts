@@ -1,5 +1,5 @@
 // API Configuration
-export const API_BASE_URL = "/api";
+export const API_BASE_URL = "https://bluevult.com/api/";
 
 // API request helper with error handling
 export async function apiRequest<T>(

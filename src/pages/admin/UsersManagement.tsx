@@ -41,7 +41,7 @@ const UsersManagement: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin-api.php", {
+      const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "fetch_users" }),
@@ -84,7 +84,7 @@ const UsersManagement: React.FC = () => {
   const handleUpdateUserModal = async () => {
     if (!showModalConfig) return;
     try {
-      const res = await fetch("/api/admin-api.php", {
+      const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -110,7 +110,7 @@ const UsersManagement: React.FC = () => {
   const toggleUserStatus = async (user: User) => {
     const newStatus = user.status === "suspended" ? "active" : "suspended";
     try {
-      const res = await fetch("/api/admin-api.php", {
+      const res = await fetch("https://bluevult.com/api/admin-api.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: 'toggle_status', userId: user.id, status: newStatus }),
@@ -133,7 +133,7 @@ const UsersManagement: React.FC = () => {
             : `Good news! Your ${platformName} account wallet has been activated.`;
 
         if (emailNotifications) {
-          fetch('/api/mail.php', {
+          fetch('https://bluevult.com/api/mail.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
