@@ -38,7 +38,7 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await fetch("/api/mail.php", {
+      const response = await fetch("https://bluevult.com/api/mail.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
