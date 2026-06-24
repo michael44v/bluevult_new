@@ -5,28 +5,25 @@ import {
   fetchKYCSubmissions,
   fetchAllTransactions,
   fetchWithdrawals,
-  fetchConnectedWallets,
-  fetchNotifications,
   fetchDashboardStats,
   updateUserStatus,
   updateUserBalance,
   updateKYCStatus,
   updateTransactionStatus,
+  fetchSystemSettings,
+  updateSystemSettings,
+  fetchApprovedDeposits,
+  fetchConnectedWallets,
+  fetchNotifications,
   sendNotification,
   fetchActivityLogs,
   fetchActivityLogStats,
-  fetchSystemSettings,
-  updateSystemSettings,
   fetchAnalyticsData,
   fetchPlatformWallets,
   fetchWalletMovements,
   fetchWalletBalanceHistory,
-
-  fetchApprovedDeposits,
-
   User,
   UserBalance,
-  UserKYC,
   Transaction,
   ConnectedWallet,
   Notification,
@@ -35,7 +32,7 @@ import {
   AnalyticsData,
   PlatformWallet,
   WalletMovement,
-} from "@/lib/api/admin";
+} from "@/lib/api/dashboardService";
 
 // Query hooks for fetching data
 
@@ -56,9 +53,12 @@ export function useUserBalances() {
 }
 
 export function useKYCSubmissions() {
-  return useQuery<UserKYC[], Error>({
+  return useQuery<any, Error>({
     queryKey: ["admin", "kyc"],
-    queryFn: fetchKYCSubmissions,
+    queryFn: async () => {
+        const res = await fetchKYCSubmissions();
+        return res.data;
+    },
     staleTime: 30000,
   });
 }
@@ -66,7 +66,10 @@ export function useKYCSubmissions() {
 export function useTransactions() {
   return useQuery<Transaction[], Error>({
     queryKey: ["admin", "transactions"],
-    queryFn: fetchAllTransactions,
+    queryFn: async () => {
+        const res = await fetchAllTransactions();
+        return res.data;
+    },
     staleTime: 30000,
   });
 }
@@ -74,7 +77,10 @@ export function useTransactions() {
 export function useWithdrawals() {
   return useQuery<Transaction[], Error>({
     queryKey: ["admin", "withdrawals"],
-    queryFn: fetchWithdrawals,
+    queryFn: async () => {
+        const res = await fetchWithdrawals();
+        return res.data;
+    },
     staleTime: 30000,
   });
 }
@@ -83,7 +89,10 @@ export function useWithdrawals() {
 export function useRevenue() {
   return useQuery({
     queryKey: ["admin", "revenue"],
-    queryFn: fetchApprovedDeposits,
+    queryFn: async () => {
+        const res = await fetchApprovedDeposits();
+        return res.data;
+    },
     staleTime: 30000
   });
 }
@@ -108,7 +117,10 @@ export function useNotifications() {
 export function useDashboardStats() {
   return useQuery({
     queryKey: ["admin", "stats"],
-    queryFn: fetchDashboardStats,
+    queryFn: async () => {
+        const res = await fetchDashboardStats();
+        return res.data;
+    },
     staleTime: 30000,
   });
 }
@@ -134,7 +146,10 @@ export function useActivityLogStats() {
 export function useSystemSettings() {
   return useQuery<SystemSettings[], Error>({
     queryKey: ["admin", "settings"],
-    queryFn: fetchSystemSettings,
+    queryFn: async () => {
+        const res = await fetchSystemSettings();
+        return res.data;
+    },
     staleTime: 30000,
   });
 }
@@ -199,7 +214,7 @@ export function useUpdateUserBalance() {
     }: { 
       userId: number; 
       amount: number; 
-      type: "credit" | "debit"; 
+      type: "add" | "subtract";
       reason: string;
     }) => updateUserBalance(userId, amount, type, reason),
     onSuccess: () => {
@@ -217,7 +232,7 @@ export function useUpdateKYCStatus() {
       status 
     }: { 
       userId: number; 
-      status: "verified" | "rejected"; 
+      status: "Approved" | "Rejected" | "Pending";
     }) => updateKYCStatus(userId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "kyc"] });
