@@ -188,8 +188,7 @@ export default function Header(): JSX.Element {
       <span style={{ color: "#3861fb" }}>Vult</span>
     </span>
     <div className="flex items-center gap-1">
-      <span className="text-xs" style={{ color: "#8a919e" }}>Powered by</span>
-      <span className="w-px h-3" style={{ background: "#2a3a4f" }} />
+     
       <span className="text-xs font-bold">
         <span style={{ color: "#1fc554ff", fontStyle: "italic" }}>GT</span>
         <span style={{ color: "#eaecef" }}>Payout</span>

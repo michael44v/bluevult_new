@@ -382,12 +382,12 @@ export default function HeroSection(): JSX.Element {
 
   {/* Text content */}
   <div className="relative z-10 flex-1" style={{ maxWidth: 240 }}>
-    <h2 className="text-3xl md:text-4xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
+    <h2 className="text-2xl md:text-4xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
       Invest in the{" "}
-      <span style={{ color: "#10b981" }}>Future of<br />Crypto</span>
+      <span style={{ color: "#10b981" }}><br />Future of <br />Crypto</span>
     </h2>
     <p className="text-sm mb-5 leading-relaxed" style={{ color: MUTED }}>
-      Smart tools. Automated trading.<br />Instant payouts.
+      - Smart tools. <br />- Automated trading.<br /> - Instant payouts.
     </p>
 
     {/* GTpayout badge */}
@@ -404,7 +404,7 @@ export default function HeroSection(): JSX.Element {
       >
         GT
       </div>
-      <span className="text-xs" style={{ color: MUTED }}>Powered by</span>
+     
       <span className="w-px h-3.5" style={{ background: "#2a3a4f" }} />
       <span className="text-sm font-bold">
         <span style={{ color: BLUE, fontStyle: "italic" }}>GT</span>
