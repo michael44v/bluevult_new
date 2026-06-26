@@ -9,7 +9,6 @@ interface TopBarProps {
 
 const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
   const navigate = useNavigate();
-  const [dark, setDark] = useState(localStorage.getItem("theme") === "dark");
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const uid = localStorage.getItem("user_id");
@@ -36,13 +35,6 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, [uid]);
-
-  const toggleDark = () => {
-    const newDark = !dark;
-    setDark(newDark);
-    document.documentElement.classList.toggle("dark", newDark);
-    localStorage.setItem("theme", newDark ? "dark" : "light");
-  };
 
   const markNotificationsSeen = async () => {
     setShowNotifications(!showNotifications);
@@ -77,6 +69,12 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
   return (
     <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-white dark:bg-[#020617]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between z-50 transition-colors duration-300">
       <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xl font-black bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent tracking-tighter">
+            GTpayout
+          </span>
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-2 hidden md:block" />
+        </div>
         <button
           className="lg:hidden p-2 rounded-md text-gray-600 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
           onClick={onSidebarToggle}
@@ -89,13 +87,6 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={toggleDark}
-          className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:scale-110 transition active:scale-95"
-        >
-          {dark ? <FaSun /> : <FaMoon />}
-        </button>
-
         <div className="relative">
           <button
             onClick={markNotificationsSeen}
