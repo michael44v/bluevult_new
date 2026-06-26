@@ -61,27 +61,6 @@ const SignIn = () => {
       return;
     }
 
-    if (showOTP) {
-      try {
-        const verifyRes = await fetch("https://bluevult.com/api/otp-verify.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: tempUserId, otp: otpCode }),
-        });
-        const verifyData = await verifyRes.json();
-        if (verifyData.success) {
-          setMessage("Verification successful");
-          localStorage.setItem("user_id", tempUserId!);
-          setTimeout(() => navigate("/dashboard"), 800);
-        } else {
-          setError(verifyData.message || "Invalid security code");
-        }
-      } catch (err) {
-        setError("Verification failed. Please try again.");
-      }
-      return;
-    }
-
     try {
       const response = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
@@ -123,28 +102,8 @@ const SignIn = () => {
         }
       }
 
-      if (force2FA && !showOTP) {
-        setTempUserId(data.user_id);
-        setIsSendingOTP(true);
-        try {
-          const otpRes = await fetch("https://bluevult.com/api/send-otp.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid: data.user_id }),
-          });
-          const otpData = await otpRes.json();
-          if (otpData.success) {
-            setShowOTP(true);
-            setCaptchaStatus(false);
-            setMessage("Security code sent to your email.");
-          } else {
-            setError(otpData.error || "Failed to send security code.");
-          }
-        } catch (err) {
-          setError("Failed to send security code. Please try again.");
-        } finally {
-          setIsSendingOTP(false);
-        }
+      if (force2FA) {
+        navigate("/otp-verify", { state: { userId: data.user_id } });
         return;
       }
 
