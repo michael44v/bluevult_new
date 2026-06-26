@@ -7,6 +7,7 @@ import TopBar from "@/components/dashboard/TopBar";
 import UserModal from "@/components/dashboard/UserModal";
 
 import { Link, useNavigate } from "react-router-dom";
+
 import {
   fetchUserSidebarData,
   fetchUserDashboardData,
@@ -422,35 +423,136 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Mobile wallet stats */}
-            <div className="lg:hidden">
-              <div className="bg-white dark:bg-[#0a1120] rounded-2xl shadow-lg p-5 border border-gray-100 dark:border-gray-800">
-                <div className="grid grid-cols-2 gap-4">
-                  {loadingStats
-                    ? Array(4).fill(0).map((_, idx) => (
-                        <div key={idx} className="animate-pulse flex items-center gap-3">
-                          <div className="p-3 rounded-full bg-gray-300/30 w-12 h-12" />
-                          <div className="flex flex-col gap-1">
-                            <div className="h-3 w-16 bg-gray-300 rounded" />
-                            <div className="h-5 w-20 bg-gray-300 rounded" />
-                            <div className="h-3 w-10 bg-gray-300 rounded" />
-                          </div>
-                        </div>
-                      ))
-                    : stats.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          <div className={`p-3 rounded-full ${item.color ? `bg-${item.color}-400/15 text-${item.color}-500` : "bg-gray-200 text-gray-500"}`}>
-                            {icons[item.type] || <FaWallet />}
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">{item.label}</p>
-                            <p className="font-semibold">{item.value}</p>
-                            <span className="text-xs text-green-500">{item.trend}</span>
-                          </div>
-                        </div>
-                      ))}
-                </div>
+           {/* ── MOBILE LAYOUT ── */}
+<div className="lg:hidden space-y-4">
+
+  {/* Hero Balance Card */}
+  <div className="rounded-3xl p-5 bg-gradient-to-br from-[#0d1b2e] to-[#0a0f1f] border border-white/8 shadow-2xl">
+    <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Total Balance</p>
+    {loadingStats ? (
+      <div className="animate-pulse h-10 w-48 bg-white/10 rounded-xl mb-3" />
+    ) : (
+      <div className="flex items-end gap-3 mb-3">
+        <h1 className="text-4xl font-bold text-white tracking-tight">
+          {stats.find(s => s.type === "USD")?.value ?? "$0.00"}
+        </h1>
+        <span className="mb-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-xs font-semibold border border-green-500/25">
+          {stats.find(s => s.type === "USD")?.trend ?? "+0%"}
+        </span>
+      </div>
+    )}
+
+    {/* Deposit / Profit / Bots */}
+    <div className="flex gap-2">
+      <Link to="/wallets/deposit" className="flex-1">
+        <button className="w-full py-2 rounded-full bg-[#00C4B4] text-black text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform">
+          <FaUniversity className="text-[11px]" /> Deposit
+        </button>
+      </Link>
+      <Link to="/withdrawal" className="flex-1">
+        <button className="w-full py-2 rounded-full bg-[#1a2235] text-[#d4af37] text-xs font-bold flex items-center justify-center gap-1 border border-[#d4af37]/30 active:scale-95 transition-transform">
+          <FaArrowUp className="text-[11px]" /> Profit
+        </button>
+      </Link>
+      <Link to="/connect_wallet" className="flex-1">
+        <button className="w-full py-2 rounded-full bg-[#1a2235] text-gray-300 text-xs font-bold flex items-center justify-center gap-1 border border-white/10 active:scale-95 transition-transform">
+          <FaExchangeAlt className="text-[11px]" /> Bots
+        </button>
+      </Link>
+    </div>
+  </div>
+
+  {/* Real Balance vs Trading Balance */}
+  <div className="grid grid-cols-2 gap-3">
+    <div className="rounded-2xl p-4 bg-[#0d1b2e] border border-white/8">
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Real Balance</p>
+      {loadingStats ? (
+        <div className="animate-pulse h-6 w-24 bg-white/10 rounded mb-1" />
+      ) : (
+        <p className="text-lg font-bold text-white">{stats.find(s => s.label?.toLowerCase().includes("real") || s.type === "USD")?.value ?? "$0.00"}</p>
+      )}
+      <span className="text-[10px] text-green-400">Available</span>
+    </div>
+    <div className="rounded-2xl p-4 bg-[#0d1b2e] border border-white/8">
+      <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Trading Balance</p>
+      {loadingStats ? (
+        <div className="animate-pulse h-6 w-24 bg-white/10 rounded mb-1" />
+      ) : (
+        <p className="text-lg font-bold text-white">{stats.find(s => s.label?.toLowerCase().includes("trading") || s.type === "BTC")?.value ?? "$0.00"}</p>
+      )}
+      <span className="text-[10px] text-blue-400">In Trade</span>
+    </div>
+  </div>
+
+  {/* Today's Profit */}
+  <div className="rounded-2xl p-4 bg-[#0d1b2e] border border-white/8 flex items-center justify-between">
+    <div>
+      <p className="text-xs text-gray-400 mb-1">Today's Profit</p>
+      {loadingStats ? (
+        <div className="animate-pulse h-7 w-32 bg-white/10 rounded" />
+      ) : (
+        <p className="text-2xl font-bold text-white">{stats.find(s => s.type === "Growth")?.value ?? "$0.00"}</p>
+      )}
+      <span className="text-xs text-green-400 font-semibold">{stats.find(s => s.type === "Growth")?.trend ?? "+0%"}</span>
+    </div>
+    {/* Mini sparkline placeholder — replace with your recharts sparkline if desired */}
+    <div className="w-24 h-12 flex items-end gap-0.5">
+      {[3,5,4,7,6,9,8,11,10,13].map((h, i) => (
+        <div key={i} className="flex-1 rounded-sm bg-green-500/60" style={{ height: `${h * 4}px` }} />
+      ))}
+    </div>
+  </div>
+
+  {/* My Assets */}
+  <div className="rounded-2xl bg-[#0d1b2e] border border-white/8 overflow-hidden">
+    <div className="flex items-center justify-between px-4 pt-4 pb-2">
+      <p className="text-sm font-bold text-white">My Assets</p>
+      <span className="text-xs text-[#00C4B4] font-medium">See all</span>
+    </div>
+    <div className="divide-y divide-white/5">
+      {cryptoData.length === 0
+        ? Array(4).fill(0).map((_, i) => (
+            <div key={i} className="px-4 py-3 animate-pulse flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/10" />
+              <div className="flex-1 space-y-1">
+                <div className="h-3 w-12 bg-white/10 rounded" />
+                <div className="h-2 w-8 bg-white/10 rounded" />
+              </div>
+              <div className="h-4 w-16 bg-white/10 rounded" />
+            </div>
+          ))
+        : cryptoData.slice(0, 5).map((asset) => (
+            <div
+              key={asset.symbol}
+              className={`px-4 py-3 flex items-center gap-3 active:bg-white/5 transition-colors ${
+                asset.flash === "up" ? "bg-green-500/5" : asset.flash === "down" ? "bg-red-500/5" : ""
+              }`}
+              onClick={() => {
+                setSelectedSymbol(asset.tvSymbol);
+                setSelectedAssetName(asset.name);
+                setIsChartModalOpen(true);
+              }}
+            >
+              <img src={asset.icon} alt={asset.symbol} className="w-8 h-8 rounded-full flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white uppercase">{asset.symbol}</p>
+                <p className="text-[11px] text-gray-500">{asset.data.length > 0 ? asset.data[asset.data.length - 1]?.value?.toFixed(2) ?? "—" : "—"}</p>
+              </div>
+              <div className="text-right">
+                <p className={`text-sm font-bold font-mono ${
+                  asset.flash === "up" ? "text-green-400" : asset.flash === "down" ? "text-red-400" : "text-white"
+                }`}>${asset.price}</p>
+                <p className={`text-[11px] font-medium ${asset.isUp ? "text-green-400" : "text-red-400"}`}>
+                  {asset.isUp ? "▲" : "▼"} {Math.abs(parseFloat(asset.change))}%
+                </p>
               </div>
             </div>
+          ))}
+    </div>
+  </div>
+
+</div>
+{/* ── END MOBILE LAYOUT ── */}
 
             {/* Desktop stat cards */}
             <div className="hidden lg:grid grid-cols-4 gap-6">
