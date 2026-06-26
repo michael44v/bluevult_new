@@ -60,9 +60,11 @@ import BottomNav from "./components/BottomNav";
 const queryClient = new QueryClient();
 
 import { useSystemSettings } from "./hooks/useAdminData";
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 
-const AppContent = () => {
+const AppContentInner = () => {
+  const location = useLocation();
   const { data: settings = [] } = useSystemSettings();
   const isMaintenanceMode = Array.isArray(settings) && settings.find(s => s.setting_key === "maintenance_mode")?.setting_value === "true";
   const sessionTimeoutMinutes = parseInt(Array.isArray(settings) && settings.find(s => s.setting_key === "session_timeout")?.setting_value || "30", 10);
@@ -92,12 +94,19 @@ const AppContent = () => {
     };
   }, [resetTimer]);
 
-  if (isMaintenanceMode && !window.location.pathname.startsWith("/admin")) {
+  if (isMaintenanceMode && !location.pathname.startsWith("/admin")) {
     return <Maintenance />;
   }
 
+  const showWidgets = useMemo(() => {
+    const isAuthPage = ["/signin", "/signup", "/otp-verify", "/reset", "/forgot-password"].includes(location.pathname.toLowerCase());
+    const isLandingPage = ["/", "/about", "/community", "/cryptocurrencies", "/exchanges", "/products", "/learn"].includes(location.pathname);
+    const userId = localStorage.getItem("user_id");
+    return userId && !isAuthPage && !isLandingPage;
+  }, [location.pathname]);
+
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
@@ -164,11 +173,17 @@ const AppContent = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <ChatBot />
-      <BottomNav />
-    </BrowserRouter>
+      {showWidgets && <ChatBot />}
+      {showWidgets && <BottomNav />}
+    </>
   );
 };
+
+const AppContent = () => (
+  <BrowserRouter>
+    <AppContentInner />
+  </BrowserRouter>
+);
 
 const App = () => {
   useDarkMode();
