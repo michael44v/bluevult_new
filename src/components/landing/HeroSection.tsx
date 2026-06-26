@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, JSX } from "react";
+ import { useState, useEffect, useRef, useCallback, JSX } from "react";
 import { ArrowRight, Star, Search, ChevronUp, ChevronDown, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import MarketStatsBanner from "../ui/Marketstatsbanner";
@@ -346,62 +346,92 @@ export default function HeroSection(): JSX.Element {
           {/* Two-column hero */}
           <div className="grid md:grid-cols-2 gap-6 items-start">
 
-            {/* LEFT */}
-            <div>
-              {globalStats && (
-                <div className="flex flex-wrap gap-3 mb-6">
-                  {[
-                    { label: "Market Cap", value: fmtCap(globalStats.total_market_cap?.usd), change: globalStats.market_cap_change_percentage_24h_usd },
-                    { label: "24h Volume", value: fmtCap(globalStats.total_volume?.usd) },
-                    { label: "BTC Dom.",   value: `${(globalStats.market_cap_percentage?.btc ?? 0).toFixed(1)}%` },
-                    { label: "ETH Dom.",   value: `${(globalStats.market_cap_percentage?.eth ?? 0).toFixed(1)}%` },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl px-4 py-3" style={{ background: "#1e2d3d", minWidth: 100 }}>
-                      <div className="text-xs font-medium mb-1" style={{ color: MUTED }}>{s.label}</div>
-                      <div className="text-base font-bold" style={{ color: TEXT }}>{s.value}</div>
-                      {s.change != null && (
-                        <div className="text-xs font-semibold mt-0.5" style={{ color: pctColor(s.change) }}>
-                          {fmtPct(s.change)}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+{/* LEFT */}
+<div
+  className="relative rounded-2xl overflow-hidden flex items-center"
+  style={{
+    background: "linear-gradient(135deg, #0a0f1e 0%, #0d1628 50%, #0f1e35 100%)",
+    border: `1px solid ${BORDER}`,
+    minHeight: 260,
+    padding: "32px 28px",
+  }}
+>
+  {/* Ambient glow behind image */}
+  <div
+    className="absolute right-0 top-0 bottom-0 pointer-events-none"
+    style={{
+      width: "65%",
+      background: "radial-gradient(ellipse at 80% 50%, rgba(56,97,251,0.22) 0%, rgba(10,20,50,0.0) 70%)",
+    }}
+  />
 
-              <h2 className="text-3xl md:text-4xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
-                Invest in the <span style={{ color: "#10b981" }}>Future of Crypto</span>
-              </h2>
-              <p className="text-sm mb-6 leading-relaxed" style={{ color: MUTED, maxWidth: 440 }}>
-                Secure, transparent, and profitable crypto investment solutions trusted by thousands worldwide.
-              </p>
+  {/* Second glow — blue ring halo effect */}
+  <div
+    className="absolute pointer-events-none"
+    style={{
+      right: "5%",
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: 180,
+      height: 180,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(56,97,251,0.15) 0%, transparent 70%)",
+      filter: "blur(18px)",
+    }}
+  />
 
-              <div className="flex gap-3 flex-wrap">
-                <Link to="/signUp">
-                  <button
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all"
-                    style={{ background: BLUE, color: "#fff" }}
-                  >
-                    Start Investing <ArrowRight className="w-4 h-4" />
-                  </button>
-                </Link>
-                <Link to="/signIn">
-                  <button
-                    className="px-6 py-3 rounded-xl text-sm font-bold border transition-all"
-                    style={{ color: TEXT, borderColor: "#2a3a4f", background: "transparent" }}
-                  >
-                    Learn More
-                  </button>
-                </Link>
-              </div>
+  {/* Text content */}
+  <div className="relative z-10 flex-1" style={{ maxWidth: 240 }}>
+    <h2 className="text-3xl md:text-4xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
+      Invest in the{" "}
+      <span style={{ color: "#10b981" }}>Future of<br />Crypto</span>
+    </h2>
+    <p className="text-sm mb-5 leading-relaxed" style={{ color: MUTED }}>
+      Smart tools. Automated trading.<br />Instant payouts.
+    </p>
 
-              <div className="flex items-center gap-2 mt-5">
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: UP }} />
-                <span className="text-xs" style={{ color: MUTED }}>
-                  Live data · Updates every 30s{lastUpdated && ` · Last: ${lastUpdated.toLocaleTimeString()}`}
-                </span>
-              </div>
-            </div>
+    {/* GTpayout badge */}
+    <div className="flex items-center gap-2">
+      <div
+        className="flex items-center justify-center w-7 h-7 rounded-md font-extrabold text-sm"
+        style={{
+          background: "linear-gradient(135deg, #1a3a6e, #2a5298)",
+          color: "#7aa4ff",
+          fontStyle: "italic",
+          letterSpacing: "-0.03em",
+          border: `1px solid rgba(56,97,251,0.4)`,
+        }}
+      >
+        GT
+      </div>
+      <span className="text-xs" style={{ color: MUTED }}>Powered by</span>
+      <span className="w-px h-3.5" style={{ background: "#2a3a4f" }} />
+      <span className="text-sm font-bold">
+        <span style={{ color: BLUE, fontStyle: "italic" }}>GT</span>
+        <span style={{ color: TEXT }}>Payout</span>
+      </span>
+    </div>
+  </div>
+
+  {/* Image — fades into background via left-side mask */}
+  <div
+    className="absolute right-0 top-0 bottom-0 pointer-events-none"
+    style={{ width: "58%" }}
+  >
+    {/* Fade mask so image bleeds into background */}
+    <div
+      className="absolute inset-0 z-10"
+      style={{
+        background: "linear-gradient(to right, #0d1628 0%, transparent 35%)",
+      }}
+    />
+    <img
+      src="https://bluevult.com/img/gtpayout.png"
+      alt="GTpayout crypto visual"
+      className="h-full w-full object-contain object-right"
+    />
+  </div>
+</div>
 
             {/* RIGHT: TradingView Featured Chart */}
             <div>

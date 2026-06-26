@@ -164,18 +164,39 @@ export default function Header(): JSX.Element {
       <div className="border-b" style={{ background: "#17212d", borderColor: "#1a2535" }}>
         <div className="max-w-screen-xl mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-3">
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div
-              className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #3861fb, #3861fb)" }}
-            >
-              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-white" />
-            </div>
-            <span className="text-base md:text-lg font-bold" style={{ color: "#eaecef" }}>
-              BlueVult
-            </span>
-          </Link>
+         {/* Logo */}
+<Link to="/" className="flex items-center gap-2.5 shrink-0">
+  {/* Hexagon icon */}
+  <div className="relative shrink-0" style={{ width: 38, height: 38 }}>
+    <svg viewBox="0 0 38 38" width="38" height="38" fill="none">
+      <polygon
+        points="19,2 35,10.5 35,27.5 19,36 3,27.5 3,10.5"
+        fill="#3861fb"
+      />
+      
+    </svg>
+    <TrendingUp
+      className="absolute"
+      style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 18, height: 18, color: "#fff" }}
+    />
+  </div>
+
+  {/* Name + powered by */}
+  <div className="flex flex-col leading-none gap-0.5">
+    <span className="text-base md:text-lg font-bold tracking-tight">
+      <span style={{ color: "#eaecef" }}>Blue</span>
+      <span style={{ color: "#3861fb" }}>Vult</span>
+    </span>
+    <div className="flex items-center gap-1">
+      <span className="text-xs" style={{ color: "#8a919e" }}>Powered by</span>
+      <span className="w-px h-3" style={{ background: "#2a3a4f" }} />
+      <span className="text-xs font-bold">
+        <span style={{ color: "#1fc554ff", fontStyle: "italic" }}>GT</span>
+        <span style={{ color: "#eaecef" }}>Payout</span>
+      </span>
+    </div>
+  </div>
+</Link>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-0.5">

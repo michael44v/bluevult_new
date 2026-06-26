@@ -34,7 +34,15 @@ const generateQAs = (BlueVult: string): QA[] => [
 const FAQSection: React.FC = () => {
   const { data: settings = [] } = useSystemSettings();
   const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
-  const cryptoQAs = generateQAs(BlueVult);
+   const cryptoQAs: QA[] = [
+    { question: "What is Bitcoin?", answer: "Bitcoin is a decentralized cryptocurrency..." },
+    // ...other static QAs...
+    { question: `What is ${platformName}?`, answer: `${platformName} is a crypto platform...` },
+    { question: `How do I deposit funds on ${platformName}?`, answer: `You can deposit crypto or fiat...` },
+    { question: `How do I withdraw funds from ${platformName}?`, answer: `Use the 'Withdraw' feature...` },
+    { question: `How does ${platformName} protect user data?`, answer: "We use encryption, 2FA..." },
+  ];
+
   const [expanded, setExpanded] = useState<number | null>(null);
 
   return (
