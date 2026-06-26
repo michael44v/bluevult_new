@@ -40,8 +40,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { data: settings = [] } = useSystemSettings();
   const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
 
-  const [walletsOpen, setWalletsOpen] = useState(false);
-  const [gtpayoutOpen, setGtpayoutOpen] = useState(false);
+  const [walletsOpen, setWalletsOpen] = useState(pathname.startsWith("/wallets") || pathname === "/withdrawal" || pathname === "/connect_wallet");
+  const [gtpayoutOpen, setGtpayoutOpen] = useState(pathname.startsWith("/dashboard/gtpayout"));
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [profilePic, setProfilePic] = useState(""); // stores profile image URL
@@ -180,7 +180,7 @@ useEffect(() => {
               onClick={() => setGtpayoutOpen(!gtpayoutOpen)}
               className={`flex items-center justify-between w-full px-4 py-3 rounded-lg text-sm font-medium transition
                 ${
-                  isActive("/gtpayout")
+                  isActive("/dashboard/gtpayout")
                     ? "bg-blue-600 text-white"
                     : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
                 }`}
