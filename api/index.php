@@ -913,6 +913,62 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         echo json_encode(['success' => true, 'positions' => $positions]);
         break;
 
+    case 'gtpayout_stats':
+        $uid = intval($input['uid'] ?? 0);
+        if (!$uid) {
+            echo json_encode(['success' => false, 'message' => 'User ID missing']);
+            exit();
+        }
+
+        // Get Trading Wallet & Stats
+        $wallet_res = mysqli_query($conn, "SELECT * FROM trading_wallets WHERE user_id = '$uid'");
+        if (mysqli_num_rows($wallet_res) == 0) {
+            mysqli_query($conn, "INSERT INTO trading_wallets (user_id) VALUES ('$uid')");
+            $wallet_res = mysqli_query($conn, "SELECT * FROM trading_wallets WHERE user_id = '$uid'");
+        }
+        $wallet = mysqli_fetch_assoc($wallet_res);
+
+        // Get Main Balance
+        $main_res = mysqli_query($conn, "SELECT user_balance FROM user_balances WHERE user_id = '$uid'");
+        $main_balance = mysqli_fetch_assoc($main_res)['user_balance'] ?? 0;
+
+        // Get Bot Status
+        $bot_res = mysqli_query($conn, "SELECT status FROM bot_sessions WHERE user_id = '$uid' AND status = 'running' LIMIT 1");
+        $bot_active = mysqli_num_rows($bot_res) > 0;
+
+        // Get Recent Trades
+        $trades_res = mysqli_query($conn, "SELECT * FROM trades WHERE user_id = '$uid' ORDER BY start_time DESC LIMIT 10");
+        $trades = [];
+        while ($row = mysqli_fetch_assoc($trades_res)) {
+            $trades[] = $row;
+        }
+
+        // Calculate Win Rate if not in wallet table
+        $total_trades_res = mysqli_query($conn, "SELECT COUNT(*) as count FROM trades WHERE user_id = '$uid' AND status IN ('won', 'lost')");
+        $total_trades = mysqli_fetch_assoc($total_trades_res)['count'];
+        $won_trades_res = mysqli_query($conn, "SELECT COUNT(*) as count FROM trades WHERE user_id = '$uid' AND status = 'won'");
+        $won_trades = mysqli_fetch_assoc($won_trades_res)['count'];
+        $win_rate = $total_trades > 0 ? round(($won_trades / $total_trades) * 100, 2) : 0;
+
+        // Get Today's Profit
+        $today = date('Y-m-d');
+        $today_profit_res = mysqli_query($conn, "SELECT SUM(pnl) as pnl FROM trades WHERE user_id = '$uid' AND status = 'won' AND DATE(start_time) = '$today'");
+        $today_profit = mysqli_fetch_assoc($today_profit_res)['pnl'] ?? 0;
+
+        echo json_encode([
+            'success' => true,
+            'wallet' => [
+                'balance' => (float)$wallet['balance'],
+                'today_profit' => (float)$today_profit,
+                'total_profit' => (float)$wallet['total_profit'],
+                'win_rate' => $win_rate
+            ],
+            'main_balance' => (float)$main_balance,
+            'bot_active' => $bot_active,
+            'trades' => $trades
+        ]);
+        break;
+
     case 'gtpayout_wallet':
         $uid = intval($input['uid'] ?? 0);
         if (!$uid) {

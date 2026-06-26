@@ -6,7 +6,6 @@ import Footer from "../../components/landing/Footer";
 
 const UserProfile: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dark, setDark] = useState(false);
 
   // Profile fields
   const [name, setName] = useState(localStorage.getItem("user_name") || "");
@@ -137,7 +136,7 @@ const UserProfile: React.FC = () => {
   };
 
   return (
-    <div className={`${dark ? "dark" : ""} flex min-h-screen bg-gray-100 dark:bg-[#0f111b]`}>
+    <div className={`flex min-h-screen bg-gray-100 dark:bg-[#0f111b]`}>
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#020617] shadow-lg z-50 transform transition-transform duration-300

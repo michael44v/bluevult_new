@@ -26,11 +26,18 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Overview = () => {
   const uid = localStorage.getItem("user_id");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferAmount, setTransferAmount] = useState("");
+  const [transferDirection, setTransferDirection] = useState<"main_to_trading" | "trading_to_main">("main_to_trading");
+  const [isTransferring, setIsTransferring] = useState(false);
 
   const performanceData = [
     { date: "May 11", value: 92000 },
@@ -50,24 +57,58 @@ const Overview = () => {
     { name: "Others", value: 4.1, color: "#8247E5" },
   ];
 
+  const fetchData = async () => {
+    try {
+      const response = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: "gtpayout_stats", uid }),
+      });
+      const json = await response.json();
+      setData(json);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("https://bluevult.com/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "gtpayout_stats", uid }),
-        });
-        const json = await response.json();
-        setData(json);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, [uid]);
+
+  const handleTransfer = async () => {
+    const amt = parseFloat(transferAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    setIsTransferring(true);
+    try {
+      const from = transferDirection === "main_to_trading" ? "main" : "trading";
+      const to = transferDirection === "main_to_trading" ? "trading" : "main";
+
+      const response = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: "transfer_funds", uid, from, to, amount: amt }),
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success(json.message);
+        setTransferAmount("");
+        setShowTransferModal(false);
+        fetchData();
+      } else {
+        toast.error(json.message);
+      }
+    } catch (error) {
+      toast.error("Transfer failed");
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   const StatBox = ({ label, value, subValue, trend, trendColor }: any) => (
     <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 shadow-lg">
@@ -85,25 +126,46 @@ const Overview = () => {
       <div className="max-w-[1400px] mx-auto space-y-6 pb-10">
 
         {/* Top Section: Balance & Actions */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
-          <div>
-            <p className="text-slate-400 text-sm mb-1">Trading Wallet Balance</p>
-            <div className="flex items-center gap-3">
-              <h2 className="text-4xl font-extrabold text-white">
-                ${parseFloat(data?.wallet?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </h2>
-              <span className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                <FaArrowUp className="text-[8px]" /> +12.45% (24h)
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Trading Wallet Balance</p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl font-extrabold text-white">
+                  ${parseFloat(data?.wallet?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </h2>
+                <span className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+                  <FaArrowUp className="text-[8px]" /> +12.45%
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/wallets/deposit">
+                  <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-4">Deposit</Button>
+              </Link>
+              <Link to="/withdrawal">
+                  <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-4">Withdraw</Button>
+              </Link>
             </div>
           </div>
-          <div className="flex gap-3">
-            <Link to="/wallets/deposit">
-                <Button className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-6">Deposit</Button>
-            </Link>
-            <Link to="/withdrawal">
-                <Button className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-6">Withdraw</Button>
-            </Link>
+
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Main Wallet Balance</p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl font-extrabold text-white">
+                  ${parseFloat(data?.main_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </h2>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowTransferModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 flex items-center gap-2"
+              >
+                <FaExchangeAlt size={12} /> Quick Transfer
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -304,6 +366,75 @@ const Overview = () => {
         </div>
 
       </div>
+
+      {/* Transfer Modal */}
+      <Dialog open={showTransferModal} onOpenChange={setShowTransferModal}>
+        <DialogContent className="bg-[#0f172a] border border-slate-800 text-white sm:max-w-[425px] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <FaExchangeAlt className="text-blue-500" /> Quick Transfer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex p-1 bg-slate-900 rounded-2xl border border-slate-800">
+              <button
+                onClick={() => setTransferDirection("main_to_trading")}
+                className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${transferDirection === "main_to_trading" ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                Main to Trading
+              </button>
+              <button
+                onClick={() => setTransferDirection("trading_to_main")}
+                className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${transferDirection === "trading_to_main" ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                Trading to Main
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Amount to Transfer</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-14 pl-8 rounded-2xl focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="flex justify-between px-1">
+                <span className="text-[10px] text-slate-500">Available:
+                  <span className="text-slate-300 ml-1 font-bold">
+                    ${transferDirection === "main_to_trading"
+                      ? parseFloat(data?.main_balance || 0).toLocaleString()
+                      : parseFloat(data?.wallet?.balance || 0).toLocaleString()}
+                  </span>
+                </span>
+                <button
+                  onClick={() => setTransferAmount(transferDirection === "main_to_trading" ? data?.main_balance : data?.wallet?.balance)}
+                  className="text-[10px] text-blue-500 font-bold hover:underline"
+                >
+                  Transfer Max
+                </button>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleTransfer}
+              disabled={isTransferring}
+              className="w-full bg-blue-600 hover:bg-blue-700 py-7 rounded-2xl font-bold text-lg shadow-xl shadow-blue-600/20"
+            >
+              {isTransferring ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  Processing...
+                </div>
+              ) : "Confirm Transfer"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </GTpayoutLayout>
   );
 };
