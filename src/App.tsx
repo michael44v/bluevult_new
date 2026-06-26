@@ -20,6 +20,13 @@ import TradingPage from "./pages/dashboard/TradingPage";
 import PositionsPage from "./pages/dashboard/PositionsPage";
 import SignIn from "./pages/auth/signIn";
 import SignUp from "./pages/auth/SignUp";
+import OtpVerify from "./pages/auth/OtpVerify";
+import GTpayoutOverview from "./pages/dashboard/gtpayout/Overview";
+import GTpayoutAdmin from "./pages/admin/GTpayoutAdmin";
+import TradingWallet from "./pages/dashboard/gtpayout/TradingWallet";
+import ManualTrading from "./pages/dashboard/gtpayout/ManualTrading";
+import TradingBot from "./pages/dashboard/gtpayout/TradingBot";
+import Leaderboard from "./pages/dashboard/gtpayout/Leaderboard";
 import Maintenance from "./pages/Maintenance";
 
 import { useDarkMode } from "./hooks/useDarkMode";
@@ -71,6 +78,7 @@ const AppContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/otp-verify" element={<OtpVerify />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/history" element={<TransactionHistory />} />
         <Route path="/markets" element={<MarketsPage />} />
@@ -85,6 +93,19 @@ const AppContent = () => {
         <Route path="/wallets/deposit" element={<WalletPage />} />
         <Route path="/trade" element={<TradingPage />} />
         <Route path="/positions" element={<PositionsPage />} />
+
+        {/* Admin GTpayout Route */}
+        <Route path="/admin/gtpayout" element={<GTpayoutAdmin />} />
+
+        {/* GTpayout Routes */}
+        <Route path="/dashboard/gtpayout" element={<GTpayoutOverview />} />
+        <Route path="/dashboard/gtpayout/trading" element={<ManualTrading />} />
+        <Route path="/dashboard/gtpayout/bot" element={<TradingBot />} />
+        <Route path="/dashboard/gtpayout/history" element={<GTpayoutOverview />} />
+        <Route path="/dashboard/gtpayout/wallet" element={<TradingWallet />} />
+        <Route path="/dashboard/gtpayout/performance" element={<GTpayoutOverview />} />
+        <Route path="/dashboard/gtpayout/leaderboard" element={<Leaderboard />} />
+        <Route path="/dashboard/gtpayout/settings" element={<GTpayoutOverview />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

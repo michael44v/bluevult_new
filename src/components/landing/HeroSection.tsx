@@ -329,7 +329,7 @@ export default function HeroSection(): JSX.Element {
           <MarketStatsBanner />
 
           <div className="mb-6">
-            <h1 className="text-xl md:text-2xl font-bold mb-1" style={{ color: TEXT }}>
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
               Today's Cryptocurrency Prices by Market Cap
             </h1>
             {globalStats && (
@@ -381,13 +381,13 @@ export default function HeroSection(): JSX.Element {
   />
 
   {/* Text content */}
-  <div className="relative z-10 flex-1" style={{ maxWidth: 240 }}>
+  <div className="relative z-10 flex-1" style={{ maxWidth: 280 }}>
     <h2 className="text-2xl md:text-4xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
       Invest in the{" "}
       <span style={{ color: "#10b981" }}><br />Future of <br />Crypto</span>
     </h2>
     <p className="text-sm mb-5 leading-relaxed" style={{ color: MUTED }}>
-      - Smart tools. <br />- Automated trading.<br /> - Instant payouts.
+      As part of its growing ecosystem, BLUEVULT operates GTpayout, a specialized platform dedicated to automated crypto trading and instant payout solutions. GTpayout enables users to access AI-driven trading strategies, real-time analytics, and rapid profit distribution, creating a more efficient and accessible trading experience.
     </p>
 
     {/* GTpayout badge */}

@@ -172,12 +172,11 @@ $stmt->close();
             
         break;
         case 'signin':
-        // Get POST data safely
-       
+            // Get POST data safely
             $email = sanitizeInput($input['email'] ?? '');
             $pwd = sanitizeInput($input['password'] ?? '');
 
-              $check = "SELECT * FROM user_details WHERE user_email='$email' and user_password='$pwd'";
+            $check = "SELECT * FROM user_details WHERE user_email='$email' and user_password='$pwd'";
 
             $result = mysqli_query($conn, $check);
             if (mysqli_num_rows($result) > 0) {
@@ -202,15 +201,26 @@ $stmt->close();
                     $stmt_notif->execute();
                     $stmt_notif->close();
 
-                    //check if user is suspended
+                    // Check if user is suspended
                     if($read['user_status'] == 'suspended') {
-                            echo json_encode(['success' => false, 'message' => 'User Account has been suspended, please Email admin for assistance. info@bluevult.com ','user_id' => $user_id]);
-                            exit();
-                        }
-                    else {
-                         echo json_encode(['success' => true, 'message' => 'success ','user_id' => $user_id, 'security_question' => $sec_q]);
+                        echo json_encode(['success' => false, 'message' => 'User Account has been suspended, please Email admin for assistance. info@bluevult.com ','user_id' => $user_id]);
                         exit();
                     }
+
+                    // Check for OTP
+                    if ($read['otp_enabled'] == 1) {
+                        $otp = rand(100000, 999999);
+                        mysqli_query($conn, "UPDATE user_details SET otp_code = '$otp' WHERE user_id = '$user_id'");
+
+                        // Send OTP via mail if possible
+                        // (Integration with mail.php or send-otp.php could go here)
+
+                        echo json_encode(['success' => true, 'otp_required' => true, 'user_id' => $user_id]);
+                        exit();
+                    }
+
+                    echo json_encode(['success' => true, 'message' => 'success ','user_id' => $user_id, 'security_question' => $sec_q]);
+                    exit();
                 }
                
             }  
@@ -218,8 +228,27 @@ $stmt->close();
                 echo json_encode(['success' => false, 'message' => 'Email or Password incorrect!']);
                 exit();
             }
+        break;
 
+        case 'verify_otp':
+            $uid = intval($input['uid'] ?? 0);
+            $otp = sanitizeInput($input['otp'] ?? '');
 
+            if (!$uid || !$otp) {
+                echo json_encode(['success' => false, 'message' => 'Missing data']);
+                exit();
+            }
+
+            $check = "SELECT * FROM user_details WHERE user_id = '$uid' AND otp_code = '$otp'";
+            $result = mysqli_query($conn, $check);
+            if (mysqli_num_rows($result) > 0) {
+                // Clear OTP after success
+                mysqli_query($conn, "UPDATE user_details SET otp_code = NULL WHERE user_id = '$uid'");
+                echo json_encode(['success' => true, 'user_id' => $uid]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Invalid OTP code']);
+            }
+            exit();
         break;
         case "sidebar":
                  $get_user = sanitizeInput($input['uid'] ?? '');
@@ -882,6 +911,86 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         }
 
         echo json_encode(['success' => true, 'positions' => $positions]);
+        break;
+
+    case 'gtpayout_wallet':
+        $uid = intval($input['uid'] ?? 0);
+        if (!$uid) {
+            echo json_encode(['success' => false, 'message' => 'User ID missing']);
+            exit();
+        }
+
+        // Get or Create Trading Wallet
+        $check = mysqli_query($conn, "SELECT * FROM trading_wallets WHERE user_id = '$uid'");
+        if (mysqli_num_rows($check) == 0) {
+            mysqli_query($conn, "INSERT INTO trading_wallets (user_id) VALUES ('$uid')");
+            $check = mysqli_query($conn, "SELECT * FROM trading_wallets WHERE user_id = '$uid'");
+        }
+        $wallet = mysqli_fetch_assoc($check);
+
+        // Get Main Wallet Balance
+        $main_check = mysqli_query($conn, "SELECT user_balance FROM user_balances WHERE user_id = '$uid'");
+        $main_balance = mysqli_fetch_assoc($main_check)['user_balance'] ?? 0;
+
+        // Get History
+        $history_res = mysqli_query($conn, "SELECT * FROM wallet_transfers WHERE user_id = '$uid' ORDER BY created_at DESC LIMIT 50");
+        $history = [];
+        while ($row = mysqli_fetch_assoc($history_res)) {
+            $history[] = $row;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'trading_wallet' => $wallet,
+            'main_balance' => $main_balance,
+            'history' => $history
+        ]);
+        break;
+
+    case 'transfer_funds':
+        $uid = intval($input['uid'] ?? 0);
+        $from = sanitizeInput($input['from'] ?? '');
+        $to = sanitizeInput($input['to'] ?? '');
+        $amount = floatval($input['amount'] ?? 0);
+
+        if (!$uid || !$from || !$to || $amount <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+            exit();
+        }
+
+        if ($from == 'main' && $to == 'trading') {
+            $res = mysqli_query($conn, "SELECT user_balance FROM user_balances WHERE user_id = '$uid'");
+            $balance = mysqli_fetch_assoc($res)['user_balance'];
+            if ($balance < $amount) {
+                echo json_encode(['success' => false, 'message' => 'Insufficient Main Wallet balance']);
+                exit();
+            }
+
+            mysqli_begin_transaction($conn);
+            mysqli_query($conn, "UPDATE user_balances SET user_balance = user_balance - $amount WHERE user_id = '$uid'");
+            mysqli_query($conn, "UPDATE trading_wallets SET balance = balance + $amount WHERE user_id = '$uid'");
+            mysqli_query($conn, "INSERT INTO wallet_transfers (user_id, from_wallet, to_wallet, amount) VALUES ('$uid', 'main', 'trading', $amount)");
+            mysqli_commit($conn);
+            echo json_encode(['success' => true, 'message' => 'Transfer successful']);
+        }
+        else if ($from == 'trading' && $to == 'main') {
+            $res = mysqli_query($conn, "SELECT balance FROM trading_wallets WHERE user_id = '$uid'");
+            $balance = mysqli_fetch_assoc($res)['balance'];
+            if ($balance < $amount) {
+                echo json_encode(['success' => false, 'message' => 'Insufficient Trading Wallet balance']);
+                exit();
+            }
+
+            mysqli_begin_transaction($conn);
+            mysqli_query($conn, "UPDATE trading_wallets SET balance = balance - $amount WHERE user_id = '$uid'");
+            mysqli_query($conn, "UPDATE user_balances SET user_balance = user_balance + $amount WHERE user_id = '$uid'");
+            mysqli_query($conn, "INSERT INTO wallet_transfers (user_id, from_wallet, to_wallet, amount) VALUES ('$uid', 'trading', 'main', $amount)");
+            mysqli_commit($conn);
+            echo json_encode(['success' => true, 'message' => 'Transfer successful']);
+        }
+        else {
+            echo json_encode(['success' => false, 'message' => 'Invalid transfer direction']);
+        }
         break;
 
     default:

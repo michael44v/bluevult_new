@@ -799,6 +799,31 @@ echo json_encode([
         echo json_encode(['success' => true, 'data' => $settings]);
         break;
 
+    case 'admin_gtpayout_overview':
+        $total_trades = $db->query("SELECT COUNT(*) as count FROM trades")->fetch_assoc()['count'];
+        $active_bots = $db->query("SELECT COUNT(*) as count FROM bot_sessions WHERE status = 'running'")->fetch_assoc()['count'];
+        $total_trading_balance = $db->query("SELECT SUM(balance) as sum FROM trading_wallets")->fetch_assoc()['sum'];
+        $total_profit = $db->query("SELECT SUM(pnl) as sum FROM trades WHERE pnl > 0")->fetch_assoc()['sum'];
+
+        $recent_trades = $db->query("
+            SELECT t.*, u.user_name
+            FROM trades t
+            LEFT JOIN user_details u ON t.user_id = u.user_id
+            ORDER BY t.start_time DESC LIMIT 10
+        ")->fetch_all(MYSQLI_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'stats' => [
+                'total_trades' => $total_trades,
+                'active_bots' => $active_bots,
+                'total_balance' => $total_trading_balance,
+                'total_profit' => $total_profit
+            ],
+            'recent_trades' => $recent_trades
+        ]);
+        break;
+
     case 'admin_update_settings':
         $settings = $input['settings'] ?? [];
         $allowed_keys = [
