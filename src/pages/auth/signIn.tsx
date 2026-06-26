@@ -104,6 +104,12 @@ const SignIn = () => {
         return;
       }
 
+      // ✅ OTP REQUIRED
+      if (data.otp_required) {
+        navigate("/otp-verify", { state: { userId: data.user_id } });
+        return;
+      }
+
       // ✅ LOGIN SUCCESS
       if (require2FA && !showSecurityQuestion) {
         if (data.security_question) {

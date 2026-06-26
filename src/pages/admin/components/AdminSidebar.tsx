@@ -19,6 +19,7 @@ import {
   FaShieldAlt,
   FaChevronDown,
   FaChevronUp,
+  FaRobot,
 } from "react-icons/fa";
 
 interface SidebarItemProps {
@@ -87,6 +88,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onClose }) => {
           <SidebarItem to="/admin/kyc" label="KYC Review" Icon={FaIdCard} /> 
           <SidebarItem to="/admin/balance" label="Balance Adjustment" Icon={FaBalanceScale} />
           <SidebarItem to="/admin/connected" label="Connected Wallet" Icon={FaBalanceScale} />
+          <SidebarItem to="/admin/gtpayout" label="GTpayout Management" Icon={FaRobot} />
           <SidebarItem to="/admin/email" label="Email Management" Icon={FaEnvelope} />
 
           {/* Finance Dropdown */}

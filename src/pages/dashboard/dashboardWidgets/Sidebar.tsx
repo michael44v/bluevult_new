@@ -16,6 +16,7 @@ import {
   FaUsers,
   FaCogs,
   FaSignOutAlt,
+  FaRobot,
 } from "react-icons/fa";
 import { setWithExpiry } from "../killer";
 
@@ -40,6 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
 
   const [walletsOpen, setWalletsOpen] = useState(false);
+  const [gtpayoutOpen, setGtpayoutOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [profilePic, setProfilePic] = useState(""); // stores profile image URL
@@ -171,6 +173,41 @@ useEffect(() => {
       <div className="bg-white dark:bg-[#0a1120] rounded-2xl p-3 shadow flex-1 flex flex-col">
         <nav className="space-y-1 flex-1">
           <SidebarItem to="/dashboard" label="Dashboard" Icon={FaChartPie} />
+
+          {/* GTpayout Dropdown */}
+          <div>
+            <button
+              onClick={() => setGtpayoutOpen(!gtpayoutOpen)}
+              className={`flex items-center justify-between w-full px-4 py-3 rounded-lg text-sm font-medium transition
+                ${
+                  isActive("/gtpayout")
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+                }`}
+            >
+              <span className="flex items-center gap-3">
+                <FaRobot className="text-emerald-500" />
+                GTpayout
+              </span>
+              <span className={`transition-transform text-xs ${gtpayoutOpen ? "rotate-90" : ""}`}>
+                ▶
+              </span>
+            </button>
+
+            {gtpayoutOpen && (
+              <div className="ml-6 mt-2 space-y-1">
+                <SidebarItem to="/dashboard/gtpayout" label="Overview" Icon={FaChartPie} />
+                <SidebarItem to="/dashboard/gtpayout/trading" label="Manual Trading" Icon={FaChartLine} />
+                <SidebarItem to="/dashboard/gtpayout/bot" label="Trading Bot" Icon={FaRobot} />
+                <SidebarItem to="/dashboard/gtpayout/history" label="Trade History" Icon={FaCoins} />
+                <SidebarItem to="/dashboard/gtpayout/wallet" label="Trading Wallet" Icon={FaWallet} />
+                <SidebarItem to="/dashboard/gtpayout/performance" label="Performance" Icon={FaChartLine} />
+                <SidebarItem to="/dashboard/gtpayout/leaderboard" label="Leaderboard" Icon={FaUsers} />
+                <SidebarItem to="/dashboard/gtpayout/settings" label="Settings" Icon={FaCogs} />
+              </div>
+            )}
+          </div>
+
           <SidebarItem to="/markets" label="Markets" Icon={FaChartLine} />
           {/*  <SidebarItem to="/positions" label="My Positions" Icon={FaCoins} />*/}
           <SidebarItem to="/history" label="Transaction History" Icon={FaCoins} />
