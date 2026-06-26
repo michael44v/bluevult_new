@@ -1,175 +1,96 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSystemSettings } from "@/hooks/useAdminData";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const OtpVerify = () => {
-  const { data: settings = [] } = useSystemSettings();
-  const platformName = (Array.isArray(settings) && settings.find(s => s.setting_key === "platform_name")?.setting_value) || "BlueVult";
+  const navigate = useNavigate();
+  const location = useLocation();
+  const userId = location.state?.userId;
 
   const [otp, setOtp] = useState("");
-  const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const [resending, setResending] = useState(false);
-  const navigate = useNavigate();
-  const uid = localStorage.getItem("user_id");
+  const [loading, setLoading] = useState(false);
 
-  // -------------------------------
-  // 1️⃣ Send OTP on component mount
-  // -------------------------------
-  useEffect(() => {
-    if (!uid) {
-      setMessage("User ID not found. Please signup first.");
+  if (!userId) {
+    navigate("/signin");
+    return null;
+  }
+
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
       return;
     }
 
-    const sendOtp = async () => {
-      setSending(true);
-      try {
-        const response = await fetch("https://bluevult.com/api/send-otp.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid }),
-        });
-        const data = await response.json();
-      //  setMessage(data.message || "OTP sent to your email.");
-      } catch (err) {
-        console.error(err);
-        setMessage("Failed to send OTP. Try again.");
-      } finally {
-        setSending(false);
-      }
-    };
-
-    sendOtp();
-  }, [uid]);
-
-  // -------------------------------
-  // 2️⃣ Verify OTP
-  // -------------------------------
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!otp || otp.length !== 6) {
-      setMessage("Please enter a valid 6-digit OTP");
-      return;
-    }
-
+    setLoading(true);
     try {
-      const response = await fetch("https://bluevult.com/api/otp-verify.php", {
+      const response = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, otp }),
+        body: JSON.stringify({ q: "verify_otp", uid: userId, otp }),
       });
 
       const data = await response.json();
-
-      if (!response.ok || data?.status === "error") {
-
-        setMessage(data.message || "OTP verification failed");
-        return;
+      if (data.success) {
+        toast.success("OTP verified successfully");
+        localStorage.setItem("user_id", userId);
+        navigate("/dashboard");
+      } else {
+        toast.error(data.message || "Invalid OTP code");
       }
-       document.body.style.transition = "opacity 0.5s";
-    document.body.style.opacity = "0.8"; // fade effect
-
-      setMessage("OTP verified successfully!");
-      setTimeout(() => navigate("/dashboard"), 1000);
-    } catch (err) {
-      console.error(err);
-      setMessage("Network error. Please try again.");
-    }
-  };
-
-  // -------------------------------
-  // 3️⃣ Resend OTP
-  // -------------------------------
-  const handleResend = async () => {
-    if (!uid) return;
-    setResending(true);
-
-    try {
-      const response = await fetch("https://bluevult.com/api/send-otp.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid }),
-      });
-      const data = await response.json();
-      setMessage(data.message || "OTP resent successfully");
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to resend OTP");
+    } catch (error) {
+      toast.error("Failed to verify OTP. Please try again.");
     } finally {
-      setResending(false);
+      setLoading(false);
     }
   };
 
   return (
-    <section className="min-h-screen bg-slate-900 flex items-center justify-center px-6 py-20">
-      <div className="w-full max-w-6xl grid md:grid-cols-2 gap-12">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl text-center">
+        <h2 className="text-3xl font-bold text-white mb-4">OTP Verification</h2>
+        <p className="text-slate-400 mb-8">
+          Enter the 6-digit code sent to your email to verify your login.
+        </p>
 
-        {/* LEFT — INFO */}
-        <div className="hidden md:flex flex-col justify-center">
-          <h1 className="text-4xl font-extrabold text-white">
-            Verify your <br />
-            <span className="text-emerald-400">BlueVult</span> account
-          </h1>
-
-          <p className="mt-6 text-slate-300 max-w-md">
-            We've sent a 6-digit OTP to your email address. Enter it below to complete your registration and access your secure BlueVult dashboard.
-          </p>
-
-          <ul className="mt-10 space-y-3 text-slate-400 text-sm">
-            <li>✔ Global access</li>
-            <li>✔ Secure verification</li>
-            <li>✔ Regulated onboarding</li>
-          </ul>
+        <div className="flex justify-center mb-8">
+          <InputOTP
+            maxLength={6}
+            value={otp}
+            onChange={(value) => setOtp(value)}
+          >
+            <InputOTPGroup>
+              <InputOTPSlot index={0} className="w-12 h-14 text-white border-slate-600" />
+              <InputOTPSlot index={1} className="w-12 h-14 text-white border-slate-600" />
+              <InputOTPSlot index={2} className="w-12 h-14 text-white border-slate-600" />
+              <InputOTPSlot index={3} className="w-12 h-14 text-white border-slate-600" />
+              <InputOTPSlot index={4} className="w-12 h-14 text-white border-slate-600" />
+              <InputOTPSlot index={5} className="w-12 h-14 text-white border-slate-600" />
+            </InputOTPGroup>
+          </InputOTP>
         </div>
 
-        {/* RIGHT — OTP FORM */}
-        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-8 md:p-10 shadow-xl">
-          <h2 className="text-2xl font-bold text-white mb-4">OTP Verification</h2>
-          <p className="text-white mb-6">
-            Check your email. You will receive a 6-digit OTP to complete your signup.
-          </p>
+        <Button
+          onClick={handleVerify}
+          disabled={loading || otp.length !== 6}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold py-6 rounded-xl"
+        >
+          {loading ? "Verifying..." : "Verify OTP"}
+        </Button>
 
-          {message && (
-            <p className="transition-opacity duration-500 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-4 py-2 rounded-md text-sm mb-4">
-              {message}
-            </p>
-          )}
-
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5">
-            <input
-              name="otp"
-              placeholder="Enter 6-digit OTP"
-              required
-              maxLength={6}
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="input"
-            />
-
-            <button
-              type="submit"
-              className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold py-3 rounded-xl transition"
-              disabled={sending}
-            >
-              {sending ? "Sending..." : "Verify OTP"}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-slate-400 text-sm">
-            Didn't receive the OTP?{" "}
-            <button
-              onClick={handleResend}
-              disabled={resending}
-              className="text-emerald-400 font-semibold hover:underline"
-            >
-              {resending ? "Resending..." : "Resend OTP"}
-            </button>
-          </p>
-        </div>
+        <button
+          onClick={() => navigate("/signin")}
+          className="mt-6 text-emerald-400 hover:underline text-sm"
+        >
+          Back to Login
+        </button>
       </div>
-    </section>
+    </div>
   );
 };
 

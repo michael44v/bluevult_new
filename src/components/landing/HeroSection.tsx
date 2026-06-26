@@ -356,7 +356,7 @@ export default function HeroSection(): JSX.Element {
     padding: "32px 28px",
   }}
 >
-  {/* Ambient glow behind image */}
+  {/* Ambient glow */}
   <div
     className="absolute right-0 top-0 bottom-0 pointer-events-none"
     style={{
@@ -365,47 +365,38 @@ export default function HeroSection(): JSX.Element {
     }}
   />
 
-  {/* Second glow — blue ring halo effect */}
-  <div
-    className="absolute pointer-events-none"
-    style={{
-      right: "5%",
-      top: "50%",
-      transform: "translateY(-50%)",
-      width: 180,
-      height: 180,
-      borderRadius: "50%",
-      background: "radial-gradient(circle, rgba(56,97,251,0.15) 0%, transparent 70%)",
-      filter: "blur(18px)",
-    }}
-  />
-
   {/* Text content */}
-  <div className="relative z-10 flex-1" style={{ maxWidth: 280 }}>
-    <h2 className="text-2xl md:text-4xl font-extrabold mb-3 leading-tight" style={{ color: TEXT }}>
+  <div
+    className="relative z-10 flex-1"
+    style={{ maxWidth: "clamp(160px, 55%, 240px)" }}
+  >
+    <h2
+      className="font-extrabold mb-3 leading-tight"
+      style={{ color: TEXT, fontSize: "clamp(1.4rem, 4vw, 2.25rem)" }}
+    >
       Invest in the{" "}
-      <span style={{ color: "#10b981" }}><br />Future of <br />Crypto</span>
+      <span style={{ color: "#10b981" }}>Future of<br />Crypto</span>
     </h2>
     <p className="text-sm mb-5 leading-relaxed" style={{ color: MUTED }}>
-      As part of its growing ecosystem, BLUEVULT operates GTpayout, a specialized platform dedicated to automated crypto trading and instant payout solutions. GTpayout enables users to access AI-driven trading strategies, real-time analytics, and rapid profit distribution, creating a more efficient and accessible trading experience.
+      - Smart tools.<br /> - Automated trading.<br />- Instant payouts.
     </p>
 
     {/* GTpayout badge */}
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <div
-        className="flex items-center justify-center w-7 h-7 rounded-md font-extrabold text-sm"
+        className="flex items-center justify-center w-7 h-7 rounded-md font-extrabold text-sm shrink-0"
         style={{
-          background: "linear-gradient(135deg, #1a3a6e, #2a5298)",
+          background: "rgba(85, 187, 59, 0.7)",
           color: "#7aa4ff",
           fontStyle: "italic",
           letterSpacing: "-0.03em",
-          border: `1px solid rgba(56,97,251,0.4)`,
+          border: `1px solid rgba(85, 187, 59, 0.7)`,
         }}
       >
         GT
       </div>
-     
-      <span className="w-px h-3.5" style={{ background: "#2a3a4f" }} />
+      
+      <span className="w-px h-3.5 shrink-0" style={{ background: "#2a3a4f" }} />
       <span className="text-sm font-bold">
         <span style={{ color: BLUE, fontStyle: "italic" }}>GT</span>
         <span style={{ color: TEXT }}>Payout</span>
@@ -413,22 +404,27 @@ export default function HeroSection(): JSX.Element {
     </div>
   </div>
 
-  {/* Image — fades into background via left-side mask */}
+  {/* Image */}
   <div
     className="absolute right-0 top-0 bottom-0 pointer-events-none"
-    style={{ width: "58%" }}
+    style={{ width: "50%" }}
   >
-    {/* Fade mask so image bleeds into background */}
+    {/* Fade mask */}
     <div
       className="absolute inset-0 z-10"
       style={{
-        background: "linear-gradient(to right, #0d1628 0%, transparent 35%)",
+        background: "linear-gradient(to right, #0d1628 0%, transparent 40%)",
       }}
     />
     <img
       src="https://bluevult.com/img/gtpayout.png"
       alt="GTpayout crypto visual"
-      className="h-full w-full object-contain object-right"
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
+        objectPosition: "right center",
+      }}
     />
   </div>
 </div>
