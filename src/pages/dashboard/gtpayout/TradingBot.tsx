@@ -3,7 +3,7 @@ import GTpayoutLayout from "./GTpayoutLayout";
 import TradingChart from "./TradingChart";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { FaRobot, FaPlay, FaStop, FaChartLine, FaShieldAlt, FaBolt, FaHistory } from "react-icons/fa";
+import { FaRobot, FaPlay, FaStop, FaChartLine, FaShieldAlt, FaBolt, FaHistory, FaBars } from "react-icons/fa";
 
 const TradingBot = () => {
   const uid = localStorage.getItem("user_id");
@@ -28,7 +28,7 @@ const TradingBot = () => {
   }, [uid]);
 
   const fetchBalance = async () => {
-    const res = await fetch("https://bluevult.com/api/index.php", {
+    const res = await fetch("/api/index.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ q: "gtpayout_wallet", uid }),
@@ -40,7 +40,7 @@ const TradingBot = () => {
   };
 
   const fetchStatus = async () => {
-    const res = await fetch("https://bluevult.com/api/index.php", {
+    const res = await fetch("/api/index.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ q: "gtpayout_stats", uid }),
@@ -56,7 +56,7 @@ const TradingBot = () => {
   const handleStart = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "bot_action", uid, action: "start", mode: "balanced" }),
@@ -77,7 +77,7 @@ const TradingBot = () => {
   const handleStop = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "bot_action", uid, action: "stop" }),
@@ -108,7 +108,7 @@ const TradingBot = () => {
          // Fetch current price (simulated or from an API)
          const entryPrice = 65000 + (Math.random() * 100);
 
-         const res = await fetch("https://bluevult.com/api/index.php", {
+         const res = await fetch("/api/index.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -128,7 +128,7 @@ const TradingBot = () => {
             const tradeId = data.trade_id;
             setTimeout(async () => {
                 const exitPrice = entryPrice + (direction === 'up' ? 20 : -20); // Simulate some profit/loss
-                await fetch("https://bluevult.com/api/index.php", {
+                await fetch("/api/index.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -150,12 +150,18 @@ const TradingBot = () => {
   };
 
   return (
-    <GTpayoutLayout title="AI Trading Bot">
-      <div className="flex flex-col h-full space-y-4">
+    <GTpayoutLayout title="AI Trading Bot" fullWidth={true} hideTopBar={true}>
+      <div className="flex flex-col h-full bg-[#020617]">
 
         {/* Top bar with Balance */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+        <div className="bg-[#0a0f1f] border-b border-slate-800/50 p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
+             <button
+                onClick={() => document.dispatchEvent(new CustomEvent('toggle-gt-sidebar'))}
+                className="lg:hidden p-2 text-slate-400 hover:text-white"
+             >
+                <FaBars />
+             </button>
              <div className="p-3 bg-blue-500/20 rounded-xl text-blue-500">
                 <FaRobot size={24} />
              </div>
@@ -179,11 +185,13 @@ const TradingBot = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-6 h-full min-h-[600px]">
+        <div className="grid lg:grid-cols-12 gap-0 flex-1 min-h-0 overflow-hidden">
 
           {/* Main Chart Section (Quotex Style) */}
-          <div className="lg:col-span-9 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden relative shadow-2xl">
+          <div className="lg:col-span-9 bg-[#020617] border-r border-slate-800/50 overflow-hidden relative flex flex-col">
+             <div className="flex-1 min-h-0 relative">
              <TradingChart symbol={asset} />
+             </div>
 
              {/* Floating Info Overlays */}
              <div className="absolute top-6 left-6 flex gap-2">
@@ -263,8 +271,8 @@ const TradingBot = () => {
           </div>
 
           {/* Side Controls Section */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
-             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6 flex-1">
+          <div className="lg:col-span-3 flex flex-col overflow-y-auto no-scrollbar">
+             <div className="bg-slate-900 p-6 space-y-6 flex-1">
                 <div className="space-y-4">
                    <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-2xl border border-slate-800">
                       <FaShieldAlt className="text-emerald-500" />
@@ -325,7 +333,7 @@ const TradingBot = () => {
                 </div>
              </div>
 
-             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center justify-between">
+             <div className="bg-slate-900 border-t border-slate-800 p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
                       <FaHistory size={16} className="text-slate-400" />

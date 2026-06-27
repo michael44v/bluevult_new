@@ -11,7 +11,7 @@ const TradeHistory = () => {
 
   const fetchTrades = async () => {
     try {
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "gtpayout_stats", uid }),

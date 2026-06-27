@@ -29,7 +29,7 @@ const TradingPage: React.FC = () => {
     const uid = localStorage.getItem("user_id");
     if (!uid) return;
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         body: JSON.stringify({ q: "sidebar", uid }),
       });
@@ -90,7 +90,7 @@ const TradingPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         body: JSON.stringify({
           q: "open_position",

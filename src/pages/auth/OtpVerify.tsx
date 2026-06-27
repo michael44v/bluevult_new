@@ -58,7 +58,7 @@ const OtpVerify = () => {
         navigate("/dashboard");
       } else {
         // Fallback to index.php verify_otp
-        const fallbackRes = await fetch("https://bluevult.com/api/index.php", {
+        const fallbackRes = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "verify_otp", uid: userId, otp }),
