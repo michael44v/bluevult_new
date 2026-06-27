@@ -59,7 +59,7 @@ const Overview = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "gtpayout_stats", uid }),
@@ -89,7 +89,7 @@ const Overview = () => {
       const from = transferDirection === "main_to_trading" ? "main" : "trading";
       const to = transferDirection === "main_to_trading" ? "trading" : "main";
 
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "transfer_funds", uid, from, to, amount: amt }),
@@ -122,8 +122,8 @@ const Overview = () => {
   );
 
   return (
-    <GTpayoutLayout title="GTpayout Dashboard">
-      <div className="max-w-[1400px] mx-auto space-y-6 pb-10">
+    <GTpayoutLayout title="GTpayout Dashboard" fullWidth={true}>
+      <div className="space-y-6 pb-10 px-4 lg:px-6">
 
         {/* Top Section: Balance & Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import GTpayoutLayout from "./GTpayoutLayout";
 import TradingChart from "./TradingChart";
 import { toast } from "sonner";
-import { FaArrowUp, FaArrowDown } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown, FaBars } from "react-icons/fa";
 
 /* ─── Types ────────────────────────────────────────────── */
 type OrderSide = "buy" | "sell";
@@ -140,7 +140,7 @@ const ManualTrading = () => {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "gtpayout_wallet", uid }),
@@ -151,7 +151,7 @@ const ManualTrading = () => {
     };
     const fetchTrades = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "gtpayout_stats", uid }),
@@ -174,7 +174,7 @@ const ManualTrading = () => {
 
   const fetchTrades = async () => {
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "gtpayout_stats", uid }),
@@ -189,7 +189,7 @@ const ManualTrading = () => {
     if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
     if (amt > balance)    { toast.error("Insufficient trading balance"); return; }
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -214,7 +214,7 @@ const ManualTrading = () => {
   const handleCloseTrade = async (tid: string) => {
     setIsClosing(tid);
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -227,7 +227,7 @@ const ManualTrading = () => {
         toast.success(`Trade closed. PnL: ${data.pnl.toFixed(2)} USDT`);
         fetchTrades();
         // Update balance
-        const resBal = await fetch("https://bluevult.com/api/index.php", {
+        const resBal = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "gtpayout_wallet", uid }),
@@ -245,7 +245,7 @@ const ManualTrading = () => {
   const changePositive = ticker.change >= 0;
 
   return (
-    <GTpayoutLayout title="Spot Trading">
+    <GTpayoutLayout title="Spot Trading" fullWidth={true} hideTopBar={true}>
       <style>{`
         /* ── Base ── */
         .bybit-root { display:flex; flex-direction:column; height:100%; font-family:'Inter',system-ui,sans-serif; background:#0f172a; color:#eaecef; overflow:hidden; }
@@ -388,6 +388,21 @@ const ManualTrading = () => {
 
         {/* ── Topbar ── */}
         <div className="bybit-topbar">
+          {/* Mobile Menu Trigger */}
+          <button
+            onClick={() => {
+               // We need a way to open the sidebar from here since TopBar is hidden
+               // In a real app we'd use a Context or a global state, but for now
+               // let's just trigger a click on the hidden sidebar overlay if it were open
+               // Actually, the sidebar is handled in GTpayoutLayout.
+               // Let's add a simple bars icon for mobile.
+               document.dispatchEvent(new CustomEvent('toggle-gt-sidebar'));
+            }}
+            className="lg:hidden p-2 text-slate-400 hover:text-white"
+          >
+            <FaBars />
+          </button>
+
           {/* Left: asset selector + live price — always visible, never shrinks */}
           <div className="bybit-topbar-left">
             <select

@@ -36,7 +36,7 @@ const UserProfile: React.FC = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const res = await fetch("https://bluevult.com/api/index.php", {
+        const res = await fetch("/api/index.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "sidebar", uid }),
@@ -92,7 +92,7 @@ const UserProfile: React.FC = () => {
 
     // Send data to PHP backend
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

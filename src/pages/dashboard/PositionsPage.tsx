@@ -33,7 +33,7 @@ const PositionsPage: React.FC = () => {
     const uid = localStorage.getItem("user_id");
     if (!uid) return;
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         body: JSON.stringify({ q: "get_positions", uid, status: "open" }),
       });
@@ -62,7 +62,7 @@ const PositionsPage: React.FC = () => {
     const uid = localStorage.getItem("user_id");
     if (!uid) return;
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         body: JSON.stringify({ q: "get_positions", uid, status: "closed" }),
       });
@@ -142,7 +142,7 @@ const PositionsPage: React.FC = () => {
     if (!uid || !currentPrice) return;
 
     try {
-      const res = await fetch("https://bluevult.com/api/index.php", {
+      const res = await fetch("/api/index.php", {
         method: "POST",
         body: JSON.stringify({ q: "close_position", pid, uid, close_price: currentPrice }),
       });

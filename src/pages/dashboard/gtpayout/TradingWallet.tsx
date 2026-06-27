@@ -15,7 +15,7 @@ const TradingWallet = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "gtpayout_wallet", uid }),
@@ -47,7 +47,7 @@ const TradingWallet = () => {
       const from = direction === "main_to_trading" ? "main" : "trading";
       const to = direction === "main_to_trading" ? "trading" : "main";
 
-      const response = await fetch("https://bluevult.com/api/index.php", {
+      const response = await fetch("/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q: "transfer_funds", uid, from, to, amount: amt }),
