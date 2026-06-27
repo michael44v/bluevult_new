@@ -1,320 +1,610 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import GTpayoutLayout from "./GTpayoutLayout";
 import TradingChart from "./TradingChart";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaHistory, FaListUl } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 
+/* ─── Types ────────────────────────────────────────────── */
+type OrderSide = "buy" | "sell";
+type OrderType = "limit" | "market";
+type OrderEntry = { price: number; amount: number; type: "buy" | "sell" };
+type Trade = {
+  start_time: string;
+  asset_symbol: string;
+  direction: string;
+  amount: string;
+  status: string;
+};
+
+/* ─── Constants ─────────────────────────────────────────── */
+const ASSETS = [
+  "BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT",
+  "XRP/USDT", "DOGE/USDT", "ADA/USDT", "MATIC/USDT",
+];
+
+const ASSET_BASE: Record<string, number> = {
+  "BTC/USDT": 65241, "ETH/USDT": 3480, "SOL/USDT": 178,
+  "BNB/USDT": 612,   "XRP/USDT": 0.58, "DOGE/USDT": 0.14,
+  "ADA/USDT": 0.47,  "MATIC/USDT": 0.88,
+};
+
+const PCTS = ["25%", "50%", "75%", "100%"];
+
+/* ─── Helpers ───────────────────────────────────────────── */
+function fmt(n: number, dec = 2) {
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: dec,
+    maximumFractionDigits: dec,
+  });
+}
+
+function priceDec(asset: string) {
+  const base = ASSET_BASE[asset] ?? 1;
+  return base < 1 ? 4 : base < 10 ? 3 : 2;
+}
+
+/* ─── Sub-components ─────────────────────────────────────── */
+
+/** Single order-book row with depth-bar */
+function BookRow({
+  price, amount, type, maxAmt, dec,
+}: {
+  price: number; amount: number; type: "buy" | "sell"; maxAmt: number; dec: number;
+}) {
+  const pct = maxAmt > 0 ? (amount / maxAmt) * 100 : 0;
+  const isSell = type === "sell";
+  return (
+    <div className="bybit-ob-row" data-side={type}>
+      <div
+        className="bybit-ob-bar"
+        style={{
+          width: `${pct}%`,
+          background: isSell ? "rgba(239,83,80,0.12)" : "rgba(38,198,128,0.12)",
+        }}
+      />
+      <span className={isSell ? "bybit-col-red" : "bybit-col-green"}>
+        {price.toFixed(dec)}
+      </span>
+      <span className="bybit-ob-amt">{amount.toFixed(4)}</span>
+      <span className="bybit-ob-total">{(price * amount).toFixed(2)}</span>
+    </div>
+  );
+}
+
+/* ─── Main Component ─────────────────────────────────────── */
 const ManualTrading = () => {
   const uid = localStorage.getItem("user_id");
-  const [asset, setAsset] = useState("BTC/USD");
-  const [amount, setAmount] = useState("100");
-  const [duration, setDuration] = useState("1m");
+
+  const [asset, setAsset] = useState("BTC/USDT");
+  const [side, setSide] = useState<OrderSide>("buy");
+  const [orderType, setOrderType] = useState<OrderType>("limit");
+  const [price, setPrice] = useState("");
+  const [amount, setAmount] = useState("");
   const [balance, setBalance] = useState(0);
-  const [orderBook, setOrderBook] = useState<{ price: number; amount: number; total: number; type: 'buy' | 'sell' }[]>([]);
-  const [recentTrades, setRecentTrades] = useState<any[]>([]);
+  const [orderBook, setOrderBook] = useState<OrderEntry[]>([]);
+  const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
+  const [activeTab, setActiveTab] = useState<"positions" | "history">("positions");
+  const [ticker, setTicker] = useState({
+    last: 0, change: 0.024, high: 0, low: 0, vol: "1.24B",
+  });
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  /* ── Seed ticker from asset ── */
   useEffect(() => {
-    const fetchBalance = async () => {
-      const res = await fetch("https://bluevult.com/api/index.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: "gtpayout_wallet", uid }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setBalance(parseFloat(data.trading_wallet.balance));
-      }
-    };
-    fetchBalance();
+    const base = ASSET_BASE[asset] ?? 0;
+    setTicker({
+      last: base,
+      change: (Math.random() * 0.06 - 0.02),
+      high: base * 1.032,
+      low: base * 0.975,
+      vol: "1.24B",
+    });
+    setPrice(base.toFixed(priceDec(asset)));
+  }, [asset]);
 
-    // Fetch trades
-    const fetchTrades = async () => {
-      const res = await fetch("https://bluevult.com/api/index.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: "gtpayout_stats", uid }),
+  /* ── Ticker live drift ── */
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setTicker(t => {
+        const drift = t.last * (Math.random() * 0.0006 - 0.0003);
+        return { ...t, last: Math.max(0.0001, t.last + drift) };
       });
-      const data = await res.json();
-      if (data.success) {
-        setRecentTrades(data.trades || []);
-      }
-    };
-    fetchTrades();
+    }, 1200);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [asset]);
 
-    // Generate Mock Order Book
-    const generateOrderBook = () => {
-      const basePrice = asset === "BTC/USD" ? 65000 : 3500;
-      const orders: any[] = [];
-      for (let i = 0; i < 15; i++) {
-        orders.push({
-          price: basePrice + (Math.random() * 100 - 50),
-          amount: Math.random() * 2,
-          type: Math.random() > 0.5 ? 'buy' : 'sell'
+  /* ── Order book ── */
+  useEffect(() => {
+    const gen = () => {
+      const base = ASSET_BASE[asset] ?? 100;
+      const entries: OrderEntry[] = [];
+      for (let i = 0; i < 20; i++) {
+        entries.push({
+          price: base + (Math.random() * base * 0.003 - base * 0.0015),
+          amount: Math.random() * 3,
+          type: i < 10 ? "sell" : "buy",
         });
       }
-      setOrderBook(orders.sort((a, b) => b.price - a.price));
+      setOrderBook(entries.sort((a, b) => b.price - a.price));
     };
-    generateOrderBook();
-    const interval = setInterval(generateOrderBook, 3000);
-    return () => clearInterval(interval);
-  }, [uid, asset]);
+    gen();
+    const id = setInterval(gen, 2500);
+    return () => clearInterval(id);
+  }, [asset]);
 
-  const handleTrade = async (direction: 'up' | 'down') => {
+  /* ── Fetch balance & trades ── */
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const res = await fetch("https://bluevult.com/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "gtpayout_wallet", uid }),
+        });
+        const data = await res.json();
+        if (data.success) setBalance(parseFloat(data.trading_wallet.balance));
+      } catch { /* silent */ }
+    };
+    const fetchTrades = async () => {
+      try {
+        const res = await fetch("https://bluevult.com/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "gtpayout_stats", uid }),
+        });
+        const data = await res.json();
+        if (data.success) setRecentTrades(data.trades || []);
+      } catch { /* silent */ }
+    };
+    fetchBalance();
+    fetchTrades();
+  }, [uid]);
+
+  const dec = priceDec(asset);
+  const sells = orderBook.filter(o => o.type === "sell").slice(0, 9);
+  const buys  = orderBook.filter(o => o.type === "buy").slice(0, 9);
+  const maxAmt = Math.max(...orderBook.map(o => o.amount), 0.0001);
+
+  const handleTrade = async (direction: "up" | "down") => {
     const amt = parseFloat(amount);
-    if (amt > balance) {
-      toast.error("Insufficient Trading Wallet balance");
-      return;
-    }
-
+    if (!amt || amt <= 0) { toast.error("Enter a valid amount"); return; }
+    if (amt > balance)    { toast.error("Insufficient trading balance"); return; }
     try {
       const res = await fetch("https://bluevult.com/api/index.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          q: "execute_trade",
-          uid,
-          symbol: asset,
-          amount: amt,
-          direction,
-          duration
+          q: "execute_trade", uid,
+          symbol: asset, amount: amt,
+          direction, duration: "1m",
         }),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Trade ${direction.toUpperCase()} opened for $${amount}`);
+        toast.success(`Order placed — ${direction === "up" ? "BUY" : "SELL"} ${amt} USDT`);
         setBalance(prev => prev - amt);
+        setAmount("");
       } else {
-        toast.error(data.message || "Failed to execute trade");
+        toast.error(data.message || "Order failed");
       }
-    } catch (err) {
-      toast.error("Connection error");
-    }
+    } catch { toast.error("Connection error"); }
   };
 
-  const assets = ["BTC/USD", "ETH/USD", "SOL/USD", "BNB/USD", "XAU/USD", "EUR/USD", "GBP/USD", "USD/JPY"];
+  const total = (parseFloat(price) || 0) * (parseFloat(amount) || 0);
+  const changePositive = ticker.change >= 0;
 
   return (
-    <GTpayoutLayout title="Manual Trading">
-      <div className="flex flex-col h-full space-y-4">
+    <GTpayoutLayout title="Spot Trading">
+      <style>{`
+        /* ── Base ── */
+        .bybit-root { display:flex; flex-direction:column; height:100%; font-family:'Inter',system-ui,sans-serif; background:#0f172a; color:#eaecef; overflow:hidden; }
 
-        {/* Top Ticker / Balance Bar */}
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-bold uppercase">Trading Balance</span>
-              <span className="text-xl font-extrabold text-emerald-500 font-mono">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="h-10 w-px bg-slate-800 hidden md:block" />
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-500 font-bold uppercase">Asset</span>
-              <select
-                value={asset}
-                onChange={(e) => setAsset(e.target.value)}
-                className="bg-transparent text-white font-bold outline-none cursor-pointer"
+        /* ── Topbar ── */
+        .bybit-topbar { display:flex; align-items:center; border-bottom:1px solid #1e293b; background:#0f172a; min-height:52px; padding:0 12px; gap:16px; flex-shrink:0; overflow:hidden; }
+        .bybit-topbar-left { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+        .bybit-asset-sel { background:transparent; border:none; color:#eaecef; font-size:16px; font-weight:700; cursor:pointer; outline:none; padding:0; max-width:120px; }
+        .bybit-asset-sel option { background:#1e293b; }
+        .bybit-ticker-price { font-size:18px; font-weight:700; line-height:1.2; }
+        .bybit-ticker-change { font-size:11px; font-weight:600; padding:2px 6px; border-radius:3px; white-space:nowrap; }
+        .bybit-divider-v { width:1px; background:#1e293b; height:28px; flex-shrink:0; }
+        /* Stats strip — scrollable on mobile, visible row on desktop */
+        .bybit-topbar-stats { display:flex; gap:16px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; flex:1; min-width:0; padding:4px 0; }
+        .bybit-topbar-stats::-webkit-scrollbar { display:none; }
+        .bybit-topbar-stat { display:flex; flex-direction:column; gap:1px; flex-shrink:0; }
+        .bybit-topbar-stat span:first-child { font-size:10px; color:#848e9c; white-space:nowrap; }
+        .bybit-topbar-stat span:last-child  { font-size:12px; font-weight:500; color:#eaecef; white-space:nowrap; }
+
+        /* ── Body grid ── */
+        /* Desktop: orderbook | chart+trades | form */
+        .bybit-body { display:grid; grid-template-columns:200px 1fr 280px; flex:1; min-height:0; overflow:hidden; }
+
+        /* ── Order book ── */
+        .bybit-orderbook { display:flex; flex-direction:column; border-right:1px solid #1e293b; overflow:hidden; }
+        .bybit-ob-header { padding:10px 12px; border-bottom:1px solid #1e293b; font-size:11px; font-weight:600; color:#848e9c; text-transform:uppercase; letter-spacing:.5px; }
+        .bybit-ob-cols { display:grid; grid-template-columns:1fr 1fr 1fr; padding:4px 8px; font-size:10px; color:#848e9c; font-weight:600; }
+        .bybit-ob-rows { flex:1; overflow-y:auto; }
+        .bybit-ob-row { display:grid; grid-template-columns:1fr 1fr 1fr; padding:2px 8px; position:relative; cursor:pointer; font-size:11px; transition:background .1s; }
+        .bybit-ob-row:hover { background:#1e293b; }
+        .bybit-ob-bar { position:absolute; top:0; right:0; bottom:0; }
+        .bybit-ob-row span { position:relative; z-index:1; font-family:'JetBrains Mono',monospace; }
+        .bybit-ob-amt   { color:#eaecef; text-align:right; }
+        .bybit-ob-total { color:#848e9c; text-align:right; }
+        .bybit-ob-spread { text-align:center; padding:6px 0; font-size:13px; font-weight:700; border-top:1px solid #1e293b; border-bottom:1px solid #1e293b; background:#0f172a; }
+
+        /* ── Chart + trades pane ── */
+        .bybit-center { display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .bybit-chart-wrap { flex:1; min-height:0; overflow:hidden; }
+        .bybit-trades-panel { height:190px; border-top:1px solid #1e293b; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; }
+        .bybit-tabs { display:flex; border-bottom:1px solid #1e293b; }
+        .bybit-tab { padding:9px 16px; font-size:12px; font-weight:600; cursor:pointer; color:#848e9c; border-bottom:2px solid transparent; transition:all .15s; background:transparent; border-top:none; border-left:none; border-right:none; white-space:nowrap; }
+        .bybit-tab.active { color:#f0b90b; border-bottom-color:#f0b90b; }
+        .bybit-trades-table { flex:1; overflow-y:auto; overflow-x:auto; }
+        .bybit-trades-table table { width:100%; border-collapse:collapse; font-size:11px; min-width:340px; }
+        .bybit-trades-table thead th { padding:6px 12px; color:#848e9c; font-weight:600; text-align:left; position:sticky; top:0; background:#0f172a; white-space:nowrap; }
+        .bybit-trades-table tbody td { padding:5px 12px; border-bottom:1px solid #1e293b; color:#eaecef; white-space:nowrap; }
+
+        /* ── Order form ── */
+        .bybit-form { border-left:1px solid #1e293b; display:flex; flex-direction:column; overflow-y:auto; background:#0f172a; min-width:0; }
+        .bybit-form-inner { padding:14px; display:flex; flex-direction:column; gap:12px; }
+        .bybit-side-tabs { display:grid; grid-template-columns:1fr 1fr; background:#1e293b; border-radius:4px; padding:3px; }
+        .bybit-side-btn { padding:7px 0; text-align:center; font-size:13px; font-weight:700; cursor:pointer; border-radius:3px; border:none; background:transparent; color:#848e9c; transition:all .15s; }
+        .bybit-side-btn.buy.active  { background:#26a17b; color:#fff; }
+        .bybit-side-btn.sell.active { background:#ef5350; color:#fff; }
+        .bybit-type-tabs { display:flex; border-bottom:1px solid #1e293b; margin:0 -14px; }
+        .bybit-type-btn { padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; color:#848e9c; border:none; background:transparent; border-bottom:2px solid transparent; transition:all .15s; }
+        .bybit-type-btn.active { color:#f0b90b; border-bottom-color:#f0b90b; }
+        .bybit-field-group { display:flex; flex-direction:column; gap:5px; }
+        .bybit-field-label { font-size:11px; color:#848e9c; font-weight:500; }
+        .bybit-field-row { display:flex; align-items:center; background:#1e293b; border:1px solid #334155; border-radius:4px; height:42px; overflow:hidden; transition:border-color .15s; }
+        .bybit-field-row:focus-within { border-color:#f0b90b55; }
+        .bybit-field-row input { flex:1; background:transparent; border:none; outline:none; color:#eaecef; font-size:14px; font-weight:500; padding:0 10px; height:100%; font-family:'JetBrains Mono',monospace; min-width:0; }
+        .bybit-field-tag { padding:0 10px; font-size:11px; color:#848e9c; font-weight:600; white-space:nowrap; flex-shrink:0; }
+        .bybit-pct-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+        .bybit-pct-btn { background:#1e293b; border:1px solid #334155; color:#848e9c; font-size:11px; font-weight:700; padding:6px 0; border-radius:4px; cursor:pointer; text-align:center; transition:all .15s; }
+        .bybit-pct-btn:hover { border-color:#f0b90b; color:#f0b90b; }
+        .bybit-total-row { display:flex; justify-content:space-between; font-size:11px; }
+        .bybit-total-row span:first-child { color:#848e9c; }
+        .bybit-total-row span:last-child  { color:#eaecef; font-family:'JetBrains Mono',monospace; }
+        .bybit-submit-btn { width:100%; height:46px; border:none; border-radius:4px; font-size:14px; font-weight:700; cursor:pointer; letter-spacing:.3px; transition:filter .15s; }
+        .bybit-submit-btn:hover { filter:brightness(1.12); }
+        .bybit-submit-btn.buy  { background:#26a17b; color:#fff; }
+        .bybit-submit-btn.sell { background:#ef5350; color:#fff; }
+        .bybit-avbl-row { display:flex; justify-content:space-between; }
+        .bybit-avbl-row span:first-child { font-size:11px; color:#848e9c; }
+        .bybit-avbl-row span:last-child  { font-size:11px; color:#eaecef; font-family:'JetBrains Mono',monospace; }
+        .bybit-market-info { border-top:1px solid #1e293b; padding:12px 14px; display:flex; flex-direction:column; gap:9px; }
+        .bybit-info-row { display:flex; justify-content:space-between; font-size:11px; }
+        .bybit-info-row span:first-child { color:#848e9c; }
+        .bybit-info-row span:last-child  { color:#eaecef; font-weight:500; }
+
+        /* ── Color utils ── */
+        .bybit-col-green { color:#26a17b; }
+        .bybit-col-red   { color:#ef5350; }
+        .bybit-col-yellow{ color:#f0b90b; }
+
+        /* ── Scrollbar ── */
+        .bybit-root ::-webkit-scrollbar { width:4px; height:4px; }
+        .bybit-root ::-webkit-scrollbar-track { background:transparent; }
+        .bybit-root ::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
+
+        /* ── Tablet: hide order book ── */
+        @media (max-width:1100px) {
+          .bybit-body { grid-template-columns:1fr 260px; }
+          .bybit-orderbook { display:none; }
+        }
+
+        /* ── Mobile: single column, chart on top, form below ── */
+        @media (max-width:640px) {
+          .bybit-root { overflow-y:auto; height:auto; min-height:100%; }
+          .bybit-topbar { gap:10px; padding:0 10px; min-height:48px; }
+          .bybit-ticker-price { font-size:15px; }
+          .bybit-body {
+            grid-template-columns:1fr;
+            grid-template-rows:auto;
+            display:flex;
+            flex-direction:column;
+            overflow:visible;
+            height:auto;
+          }
+          .bybit-center {
+            height:auto;
+            overflow:visible;
+            flex-shrink:0;
+          }
+          .bybit-chart-wrap {
+            height:300px;
+            flex:none;
+            overflow:hidden;
+          }
+          .bybit-trades-panel {
+            height:auto;
+            max-height:220px;
+            flex-shrink:0;
+          }
+          .bybit-form {
+            border-left:none;
+            border-top:1px solid #1e293b;
+            overflow:visible;
+            flex-shrink:0;
+          }
+          .bybit-form-inner { padding:12px; }
+          .bybit-market-info { padding:12px; }
+          .bybit-type-tabs { margin:0 -12px; }
+        }
+      `}</style>
+
+      <div className="bybit-root">
+
+        {/* ── Topbar ── */}
+        <div className="bybit-topbar">
+          {/* Left: asset selector + live price — always visible, never shrinks */}
+          <div className="bybit-topbar-left">
+            <select
+              className="bybit-asset-sel"
+              value={asset}
+              onChange={e => setAsset(e.target.value)}
+            >
+              {ASSETS.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+
+            <div className="bybit-divider-v" />
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <span
+                className="bybit-ticker-price"
+                style={{ color: changePositive ? "#26a17b" : "#ef5350" }}
               >
-                {assets.map(a => <option key={a} value={a} className="bg-slate-900">{a}</option>)}
-              </select>
+                {fmt(ticker.last, dec)}
+              </span>
+              <span
+                className="bybit-ticker-change"
+                style={{
+                  color: changePositive ? "#26a17b" : "#ef5350",
+                  background: changePositive ? "rgba(38,161,123,.12)" : "rgba(239,83,80,.12)",
+                  display: "inline-block",
+                  width: "fit-content",
+                }}
+              >
+                {changePositive ? "+" : ""}{(ticker.change * 100).toFixed(2)}%
+              </span>
             </div>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto pb-2 md:pb-0">
-             {[
-               { label: '24h High', value: '$67,421.00', color: 'text-white' },
-               { label: '24h Low', value: '$64,120.50', color: 'text-white' },
-               { label: '24h Change', value: '+2.45%', color: 'text-emerald-500' },
-               { label: '24h Volume', value: '1.2B USDT', color: 'text-slate-400' },
-             ].map((item, i) => (
-               <div key={i} className="flex flex-col min-w-[80px]">
-                 <span className="text-[9px] text-slate-500 font-bold">{item.label}</span>
-                 <span className={`text-xs font-bold ${item.color}`}>{item.value}</span>
-               </div>
-             ))}
+          {/* Right: scrollable stats strip */}
+          <div className="bybit-topbar-stats">
+            {[
+              { label: "24h High",   value: fmt(ticker.high, dec) },
+              { label: "24h Low",    value: fmt(ticker.low, dec) },
+              { label: "24h Volume", value: ticker.vol + " USDT" },
+              { label: "Payout",     value: "+85%" },
+            ].map(s => (
+              <div key={s.label} className="bybit-topbar-stat">
+                <span>{s.label}</span>
+                <span>{s.value}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Main Grid: Order Book | Chart | Trade Execution */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-[600px]">
+        {/* ── Body ── */}
+        <div className="bybit-body">
 
-          {/* Left: Order Book (Binance Style) */}
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-slate-800 flex items-center gap-2">
-               <FaListUl className="text-blue-500 text-xs" />
-               <h3 className="text-xs font-bold uppercase text-slate-400">Order Book</h3>
+          {/* ── Order Book ── */}
+          <div className="bybit-orderbook">
+            <div className="bybit-ob-header">Order Book</div>
+            <div className="bybit-ob-cols">
+              <span>Price</span><span style={{ textAlign: "right" }}>Amount</span><span style={{ textAlign: "right" }}>Total</span>
             </div>
-            <div className="flex-1 overflow-y-auto font-mono text-[10px]">
-               <div className="grid grid-cols-2 p-2 text-slate-500 font-bold border-b border-slate-800/50">
-                  <span>Price</span>
-                  <span className="text-right">Amount</span>
-               </div>
-
-               {/* Sells */}
-               <div className="space-y-0.5 p-1">
-                  {orderBook.filter(o => o.type === 'sell').slice(0, 8).map((o, i) => (
-                    <div key={i} className="grid grid-cols-2 relative group hover:bg-slate-800/50 cursor-pointer p-1 rounded">
-                       <div className="absolute inset-0 bg-rose-500/10 origin-right transition-transform" style={{ width: `${(o.amount / 2) * 100}%` }} />
-                       <span className="text-rose-500 font-bold z-10">{o.price.toFixed(2)}</span>
-                       <span className="text-right text-slate-400 z-10">{o.amount.toFixed(4)}</span>
-                    </div>
-                  ))}
-               </div>
-
-               <div className="py-2 text-center border-y border-slate-800 bg-slate-800/30">
-                  <span className="text-sm font-bold text-white">65,241.50</span>
-               </div>
-
-               {/* Buys */}
-               <div className="space-y-0.5 p-1">
-                  {orderBook.filter(o => o.type === 'buy').slice(0, 8).map((o, i) => (
-                    <div key={i} className="grid grid-cols-2 relative group hover:bg-slate-800/50 cursor-pointer p-1 rounded">
-                       <div className="absolute inset-0 bg-emerald-500/10 origin-right transition-transform" style={{ width: `${(o.amount / 2) * 100}%` }} />
-                       <span className="text-emerald-500 font-bold z-10">{o.price.toFixed(2)}</span>
-                       <span className="text-right text-slate-400 z-10">{o.amount.toFixed(4)}</span>
-                    </div>
-                  ))}
-               </div>
+            <div className="bybit-ob-rows">
+              {sells.map((o, i) => (
+                <BookRow key={`s${i}`} {...o} maxAmt={maxAmt} dec={dec} />
+              ))}
+            </div>
+            <div className="bybit-ob-spread">
+              <span style={{ color: changePositive ? "#26a17b" : "#ef5350" }}>
+                {fmt(ticker.last, dec)}
+              </span>
+            </div>
+            <div className="bybit-ob-rows">
+              {buys.map((o, i) => (
+                <BookRow key={`b${i}`} {...o} maxAmt={maxAmt} dec={dec} />
+              ))}
             </div>
           </div>
 
-          {/* Middle: Chart */}
-          <div className="lg:col-span-7 flex flex-col space-y-4">
-             <div className="bg-slate-900 border border-slate-800 rounded-2xl flex-1 overflow-hidden">
-                <TradingChart symbol={asset} />
-             </div>
+          {/* ── Chart + Trades ── */}
+          <div className="bybit-center">
+            <div className="bybit-chart-wrap">
+              <TradingChart symbol={asset} />
+            </div>
 
-             {/* Bottom: Trade History / Positions */}
-             <div className="bg-slate-900 border border-slate-800 rounded-2xl h-48 overflow-hidden flex flex-col">
-                <div className="p-3 border-b border-slate-800 flex items-center justify-between">
-                   <div className="flex gap-4">
-                      <button className="text-xs font-bold text-blue-500 border-b-2 border-blue-500 pb-1">Open Positions</button>
-                      <button className="text-xs font-bold text-slate-500 hover:text-white pb-1">Order History</button>
-                   </div>
-                   <FaHistory className="text-slate-600 text-xs" />
-                </div>
-                <div className="flex-1 overflow-y-auto p-4">
-                   <table className="w-full text-left text-[10px]">
-                      <thead>
-                        <tr className="text-slate-500 uppercase">
-                          <th>Time</th>
-                          <th>Asset</th>
-                          <th>Side</th>
-                          <th>Amount</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-slate-300">
-                         {recentTrades.map((t, i) => (
-                           <tr key={i} className="border-b border-slate-800/50">
-                              <td className="py-2">{new Date(t.start_time).toLocaleTimeString()}</td>
-                              <td className="py-2 font-bold text-white">{t.asset_symbol}</td>
-                              <td className={`py-2 font-bold ${t.direction === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.direction.toUpperCase()}</td>
-                              <td className="py-2">${parseFloat(t.amount).toLocaleString()}</td>
-                              <td className="py-2">
-                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold ${t.status === 'won' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                  {t.status.toUpperCase()}
-                                </span>
-                              </td>
-                           </tr>
-                         ))}
-                         {recentTrades.length === 0 && (
-                           <tr>
-                              <td colSpan={5} className="text-center py-8 text-slate-600">No active positions.</td>
-                           </tr>
-                         )}
-                      </tbody>
-                   </table>
-                </div>
-             </div>
+            <div className="bybit-trades-panel">
+              <div className="bybit-tabs">
+                <button
+                  className={`bybit-tab ${activeTab === "positions" ? "active" : ""}`}
+                  onClick={() => setActiveTab("positions")}
+                >
+                  Open Orders
+                </button>
+                <button
+                  className={`bybit-tab ${activeTab === "history" ? "active" : ""}`}
+                  onClick={() => setActiveTab("history")}
+                >
+                  Trade History
+                </button>
+              </div>
+              <div className="bybit-trades-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Pair</th>
+                      <th>Side</th>
+                      <th>Amount (USDT)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentTrades.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: "center", padding: "24px 0", color: "#848e9c" }}>
+                          No records found
+                        </td>
+                      </tr>
+                    ) : recentTrades.map((t, i) => (
+                      <tr key={i}>
+                        <td>{new Date(t.start_time).toLocaleTimeString()}</td>
+                        <td style={{ fontWeight: 600 }}>{t.asset_symbol}</td>
+                        <td className={t.direction === "up" ? "bybit-col-green" : "bybit-col-red"} style={{ fontWeight: 700 }}>
+                          {t.direction === "up" ? "BUY" : "SELL"}
+                        </td>
+                        <td>${parseFloat(t.amount).toLocaleString()}</td>
+                        <td>
+                          <span style={{
+                            display: "inline-block",
+                            padding: "2px 8px",
+                            borderRadius: 3,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            background: t.status === "won" ? "rgba(38,161,123,.15)" : "rgba(240,185,11,.1)",
+                            color: t.status === "won" ? "#26a17b" : "#f0b90b",
+                          }}>
+                            {t.status.toUpperCase()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
-          {/* Right: Execution Form */}
-          <div className="lg:col-span-3 space-y-4">
-             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-                <div className="flex gap-2 mb-6 p-1 bg-slate-800 rounded-xl">
-                   <button className="flex-1 py-2 bg-emerald-500 text-slate-900 font-bold rounded-lg text-sm">Buy</button>
-                   <button className="flex-1 py-2 text-slate-400 font-bold rounded-lg text-sm hover:text-white">Sell</button>
+          {/* ── Order Form ── */}
+          <div className="bybit-form">
+            {/* Side toggle */}
+            <div className="bybit-form-inner">
+              <div className="bybit-side-tabs">
+                <button
+                  className={`bybit-side-btn buy ${side === "buy" ? "active" : ""}`}
+                  onClick={() => setSide("buy")}
+                >
+                  Buy
+                </button>
+                <button
+                  className={`bybit-side-btn sell ${side === "sell" ? "active" : ""}`}
+                  onClick={() => setSide("sell")}
+                >
+                  Sell
+                </button>
+              </div>
+
+              {/* Order type */}
+              <div className="bybit-type-tabs">
+                {(["limit", "market"] as OrderType[]).map(t => (
+                  <button
+                    key={t}
+                    className={`bybit-type-btn ${orderType === t ? "active" : ""}`}
+                    onClick={() => setOrderType(t)}
+                    style={{ textTransform: "capitalize" }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              {/* Available */}
+              <div className="bybit-avbl-row">
+                <span>Available</span>
+                <span>{fmt(balance)} USDT</span>
+              </div>
+
+              {/* Price field (limit only) */}
+              {orderType === "limit" && (
+                <div className="bybit-field-group">
+                  <div className="bybit-field-label">Price</div>
+                  <div className="bybit-field-row">
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={e => setPrice(e.target.value)}
+                      placeholder="0.00"
+                    />
+                    <span className="bybit-field-tag">USDT</span>
+                  </div>
                 </div>
+              )}
 
-                <div className="space-y-4">
-                   <div>
-                      <div className="flex justify-between mb-2">
-                         <label className="text-[10px] text-slate-500 font-bold uppercase">Amount (USDT)</label>
-                         <span className="text-[10px] text-slate-500 font-bold uppercase">Avbl: <span className="text-white">{balance.toFixed(2)}</span></span>
-                      </div>
-                      <div className="relative">
-                         <Input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="bg-slate-800 border-slate-700 h-12 text-white font-bold focus:ring-emerald-500"
-                         />
-                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold">USDT</span>
-                      </div>
-                   </div>
-
-                   <div>
-                      <label className="text-[10px] text-slate-500 font-bold uppercase mb-2 block">Duration</label>
-                      <select
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 h-12 rounded-md px-4 text-white font-bold outline-none"
-                      >
-                         <option value="1m">1 Minute</option>
-                         <option value="5m">5 Minutes</option>
-                         <option value="15m">15 Minutes</option>
-                         <option value="1h">1 Hour</option>
-                      </select>
-                   </div>
-
-                   <div className="grid grid-cols-4 gap-2 pt-2">
-                      {['25%', '50%', '75%', '100%'].map(p => (
-                        <button
-                          key={p}
-                          onClick={() => setAmount((balance * (parseInt(p) / 100)).toString())}
-                          className="bg-slate-800 hover:bg-slate-700 text-slate-400 text-[10px] font-bold py-1.5 rounded transition-colors"
-                        >
-                          {p}
-                        </button>
-                      ))}
-                   </div>
-
-                   <div className="pt-4 flex flex-col gap-3">
-                      <Button
-                        onClick={() => handleTrade('up')}
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-extrabold h-14 rounded-xl text-lg shadow-lg shadow-emerald-500/20"
-                      >
-                         <FaArrowUp className="mr-2" /> BUY / LONG
-                      </Button>
-                      <Button
-                        onClick={() => handleTrade('down')}
-                        className="w-full bg-rose-500 hover:bg-rose-600 text-white font-extrabold h-14 rounded-xl text-lg shadow-lg shadow-rose-500/20"
-                      >
-                         <FaArrowDown className="mr-2" /> SELL / SHORT
-                      </Button>
-                   </div>
+              {orderType === "market" && (
+                <div className="bybit-field-group">
+                  <div className="bybit-field-label">Price</div>
+                  <div className="bybit-field-row" style={{ opacity: 0.5 }}>
+                    <input type="text" value="Market Price" readOnly style={{ cursor: "not-allowed" }} />
+                  </div>
                 </div>
-             </div>
+              )}
 
-             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                <h4 className="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
-                   <FaExchangeAlt className="text-blue-500" /> Market Info
-                </h4>
-                <div className="space-y-3">
-                   <div className="flex justify-between text-[10px]">
-                      <span className="text-slate-500 font-bold">Payout</span>
-                      <span className="text-emerald-500 font-bold">+85%</span>
-                   </div>
-                   <div className="flex justify-between text-[10px]">
-                      <span className="text-slate-500 font-bold">Min Amount</span>
-                      <span className="text-white font-bold">$10.00</span>
-                   </div>
-                   <div className="flex justify-between text-[10px]">
-                      <span className="text-slate-500 font-bold">Market Status</span>
-                      <span className="text-emerald-500 font-bold">Open</span>
-                   </div>
+              {/* Amount */}
+              <div className="bybit-field-group">
+                <div className="bybit-field-label">Amount</div>
+                <div className="bybit-field-row">
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <span className="bybit-field-tag">USDT</span>
                 </div>
-             </div>
+              </div>
+
+              {/* Pct buttons */}
+              <div className="bybit-pct-row">
+                {PCTS.map(p => (
+                  <button
+                    key={p}
+                    className="bybit-pct-btn"
+                    onClick={() => setAmount((balance * (parseInt(p) / 100)).toFixed(2))}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+
+              {/* Total */}
+              <div className="bybit-total-row">
+                <span>Order value</span>
+                <span>{orderType === "market" ? "—" : fmt(total)} USDT</span>
+              </div>
+
+              {/* Submit */}
+              <button
+                className={`bybit-submit-btn ${side}`}
+                onClick={() => handleTrade(side === "buy" ? "up" : "down")}
+              >
+                {side === "buy"
+                  ? <><FaArrowUp style={{ display: "inline", marginRight: 6 }} />Buy {asset.split("/")[0]}</>
+                  : <><FaArrowDown style={{ display: "inline", marginRight: 6 }} />Sell {asset.split("/")[0]}</>
+                }
+              </button>
+            </div>
+
+            {/* Market info */}
+            <div className="bybit-market-info">
+              {[
+                { label: "Payout",         value: "+85%",    color: "#26a17b" },
+                { label: "Min order",       value: "$10.00",  color: "#eaecef" },
+                { label: "Market",          value: "Open",    color: "#26a17b" },
+                { label: "Maker fee",       value: "0.10%",   color: "#eaecef" },
+                { label: "Taker fee",       value: "0.10%",   color: "#eaecef" },
+              ].map(r => (
+                <div key={r.label} className="bybit-info-row">
+                  <span>{r.label}</span>
+                  <span style={{ color: r.color }}>{r.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
         </div>
