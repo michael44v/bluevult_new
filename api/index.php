@@ -805,6 +805,7 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         $amount = floatval($input['amount'] ?? 0);
         $duration = sanitizeInput($input['duration'] ?? '1m');
         $is_bot = intval($input['is_bot'] ?? 0);
+        $entry_price = floatval($input['entry_price'] ?? 0);
 
         if ($uid <= 0 || !$asset || $amount <= 0 || !$direction) {
             echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
@@ -819,29 +820,81 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
             exit();
         }
 
-        // Simulate Entry Price (Mock)
-        $entry_price = 65000 + (rand(-1000, 1000) / 10);
-
-        // Immediate Execution Simulation
-        $pnl_rate = 0.85; // 85% payout
-        $outcome = (rand(1, 100) <= 65) ? 'won' : 'lost'; // 65% win rate for simulated trades
-        $pnl = ($outcome === 'won') ? ($amount * $pnl_rate) : -$amount;
+        if ($entry_price <= 0) {
+            // Fallback entry price if not provided by frontend
+            $entry_price = 65000 + (rand(-1000, 1000) / 10);
+        }
 
         mysqli_begin_transaction($conn);
         try {
-            // Update Balance
-            mysqli_query($conn, "UPDATE trading_wallets SET balance = balance + $pnl WHERE user_id = '$uid'");
+            // Deduct amount from balance (locking it for the trade)
+            mysqli_query($conn, "UPDATE trading_wallets SET balance = balance - $amount WHERE user_id = '$uid'");
 
-            // Log Trade
-            $stmt = $conn->prepare("INSERT INTO trades (user_id, asset_symbol, direction, amount, entry_price, status, pnl, is_bot, duration, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-            $stmt->bind_param("issddsdss", $uid, $asset, $direction, $amount, $entry_price, $outcome, $pnl, $is_bot, $duration);
+            // Log Trade as 'open'
+            $status = 'open';
+            $stmt = $conn->prepare("INSERT INTO trades (user_id, asset_symbol, direction, amount, entry_price, status, is_bot, duration, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt->bind_param("issddsds", $uid, $asset, $direction, $amount, $entry_price, $status, $is_bot, $duration);
+            $stmt->execute();
+            $trade_id = mysqli_insert_id($conn);
+
+            mysqli_commit($conn);
+            echo json_encode(['success' => true, 'message' => 'Trade opened', 'trade_id' => $trade_id, 'entry_price' => $entry_price]);
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
+            echo json_encode(['success' => false, 'message' => 'Failed to open trade: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'close_trade':
+        $tid = intval($input['tid'] ?? 0);
+        $uid = intval($input['uid'] ?? 0);
+        $exit_price = floatval($input['exit_price'] ?? 0);
+
+        if ($tid <= 0 || $uid <= 0 || $exit_price <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+            exit();
+        }
+
+        $stmt = $conn->prepare("SELECT * FROM trades WHERE trade_id = ? AND user_id = ? AND status = 'open'");
+        $stmt->bind_param("ii", $tid, $uid);
+        $stmt->execute();
+        $trade = $stmt->get_result()->fetch_assoc();
+
+        if (!$trade) {
+            echo json_encode(['success' => false, 'message' => 'Trade not found or already closed']);
+            exit();
+        }
+
+        $entry = floatval($trade['entry_price']);
+        $amount = floatval($trade['amount']);
+        $direction = $trade['direction'];
+
+        // Calculate PnL based on percentage difference
+        $pct_diff = ($exit_price - $entry) / $entry;
+        if ($direction === 'up') {
+            $pnl = $pct_diff * $amount;
+        } else {
+            $pnl = -$pct_diff * $amount;
+        }
+
+        $return_amt = $amount + $pnl;
+        $status = ($pnl >= 0) ? 'won' : 'lost';
+
+        mysqli_begin_transaction($conn);
+        try {
+            // Add back amount + pnl to trading balance
+            mysqli_query($conn, "UPDATE trading_wallets SET balance = balance + $return_amt WHERE user_id = '$uid'");
+
+            // Update trade record
+            $stmt = $conn->prepare("UPDATE trades SET status = ?, exit_price = ?, pnl = ?, end_time = NOW() WHERE trade_id = ?");
+            $stmt->bind_param("sddi", $status, $exit_price, $pnl, $tid);
             $stmt->execute();
 
             mysqli_commit($conn);
-            echo json_encode(['success' => true, 'message' => 'Trade executed', 'outcome' => $outcome, 'pnl' => $pnl]);
+            echo json_encode(['success' => true, 'message' => 'Trade closed', 'pnl' => $pnl, 'status' => $status]);
         } catch (Exception $e) {
             mysqli_rollback($conn);
-            echo json_encode(['success' => false, 'message' => 'Execution failed: ' . $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Failed to close trade: ' . $e->getMessage()]);
         }
         break;
 

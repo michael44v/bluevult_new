@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import GTpayoutLayout from "./GTpayoutLayout";
-import { FaFilter, FaDownload, FaSearch } from "react-icons/fa";
+import { FaFilter, FaDownload, FaSearch, FaRobot } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 
 const TradeHistory = () => {
@@ -9,23 +9,26 @@ const TradeHistory = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
+  const fetchTrades = async () => {
+    try {
+      const response = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: "gtpayout_stats", uid }),
+      });
+      const json = await response.json();
+      setTrades(json.trades || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTrades = async () => {
-      try {
-        const response = await fetch("https://bluevult.com/api/index.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ q: "gtpayout_stats", uid }),
-        });
-        const json = await response.json();
-        setTrades(json.trades || []);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTrades();
+    const tid = setInterval(fetchTrades, 3000);
+    return () => clearInterval(tid);
   }, [uid]);
 
   const filteredTrades = trades.filter((t) => {
@@ -33,6 +36,7 @@ const TradeHistory = () => {
     if (filter === "won") return t.status === "won";
     if (filter === "lost") return t.status === "lost";
     if (filter === "open") return t.status === "open";
+    if (filter === "bot") return parseInt(t.is_bot) === 1;
     return true;
   });
 
@@ -59,6 +63,7 @@ const TradeHistory = () => {
               <option value="won">Won Only</option>
               <option value="lost">Lost Only</option>
               <option value="open">Open Only</option>
+              <option value="bot">AI Bot Only</option>
             </select>
 
             <Button variant="outline" className="border-slate-800 bg-slate-900 text-white rounded-xl flex items-center gap-2">
@@ -90,7 +95,10 @@ const TradeHistory = () => {
                   <tr><td colSpan={9} className="py-10 text-center text-slate-500 italic">No trades found matching your criteria.</td></tr>
                 ) : filteredTrades.map((trade: any) => (
                   <tr key={trade.trade_id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-4 px-6 text-slate-400 font-mono">#GT-{trade.trade_id}</td>
+                    <td className="py-4 px-6 text-slate-400 font-mono flex items-center gap-2">
+                        {parseInt(trade.is_bot) === 1 && <FaRobot className="text-blue-400" title="AI Bot Trade" />}
+                        #GT-{trade.trade_id}
+                    </td>
                     <td className="py-4 px-6 font-bold text-white">{trade.asset_symbol}</td>
                     <td className={`py-4 px-6 font-bold uppercase ${trade.direction === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>
                       {trade.direction === 'up' ? 'Long' : 'Short'}
