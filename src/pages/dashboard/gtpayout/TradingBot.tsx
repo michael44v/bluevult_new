@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import GTpayoutLayout from "./GTpayoutLayout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { FaRobot, FaPlay, FaStop, FaHistory, FaCogs, FaChartBar } from "react-icons/fa";
+import { FaRobot, FaPlay, FaStop, FaHistory, FaCogs, FaChartBar, FaTrophy } from "react-icons/fa";
 
 const TradingBot = () => {
   const uid = localStorage.getItem("user_id");

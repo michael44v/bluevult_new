@@ -39,8 +39,17 @@ const PositionsPage: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setPositions(data.positions);
-        setupWebsockets(data.positions);
+
+         const normalized = data.positions.map((p: Position) => ({
+          ...p,
+          pnl: parseFloat(p.pnl as any) || 0,
+          margin: p.margin,      // keep as string, you already parseFloat these in JSX
+          size: p.size,
+          entry_price: p.entry_price,
+        }));
+
+        setPositions(normalized);
+        setupWebsockets(normalized);
       }
     } catch (err) {
       console.error(err);
@@ -58,7 +67,15 @@ const PositionsPage: React.FC = () => {
         body: JSON.stringify({ q: "get_positions", uid, status: "closed" }),
       });
       const data = await res.json();
-      if (data.success) setHistory(data.positions);
+     if (data.success) {
+          const normalized = data.positions.map((p: Position) => ({
+            ...p,
+            pnl: parseFloat(p.pnl as any) || 0,
+          }));
+          setHistory(normalized);          // ← was data.positions
+        }
+
+
     } catch (err) {
       console.error(err);
     }
@@ -131,7 +148,7 @@ const PositionsPage: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Position closed. PnL: $${data.pnl.toFixed(2)}`);
+       toast.success(`Position closed. PnL: $${parseFloat(data.pnl).toFixed(2)}`);
         fetchPositions();
         fetchHistory();
       } else {

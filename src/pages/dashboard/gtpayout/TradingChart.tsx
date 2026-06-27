@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { createChart, IChartApi } from 'lightweight-charts';
+import { createChart, IChartApi, CandlestickSeries } from 'lightweight-charts';
 
 interface ChartProps {
   symbol: string;
@@ -29,13 +29,13 @@ const TradingChart: React.FC<ChartProps> = ({ symbol }) => {
       },
     });
 
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: '#10b981',
-      downColor: '#ef4444',
-      borderVisible: false,
-      wickUpColor: '#10b981',
-      wickDownColor: '#ef4444',
-    });
+   const candleSeries = chart.addSeries(CandlestickSeries, {
+  upColor: '#10b981',
+  downColor: '#ef4444',
+  borderVisible: false,
+  wickUpColor: '#10b981',
+  wickDownColor: '#ef4444',
+});
 
     // Mock data for initial chart
     const data = [];
