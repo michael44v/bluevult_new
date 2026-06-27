@@ -10,10 +10,12 @@ type OrderType = "limit" | "market";
 type OrderEntry = { price: number; amount: number; type: "buy" | "sell" };
 type Trade = {
   start_time: string;
+  trade_id: string;
   asset_symbol: string;
   direction: string;
   amount: string;
   status: string;
+  entry_price: string;
 };
 
 /* ─── Constants ─────────────────────────────────────────── */
@@ -84,6 +86,7 @@ const ManualTrading = () => {
   const [orderBook, setOrderBook] = useState<OrderEntry[]>([]);
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [activeTab, setActiveTab] = useState<"positions" | "history">("positions");
+  const [isClosing, setIsClosing] = useState<string | null>(null);
   const [ticker, setTicker] = useState({
     last: 0, change: 0.024, high: 0, low: 0, vol: "1.24B",
   });
@@ -159,12 +162,27 @@ const ManualTrading = () => {
     };
     fetchBalance();
     fetchTrades();
+
+    const tid = setInterval(fetchTrades, 3000);
+    return () => clearInterval(tid);
   }, [uid]);
 
   const dec = priceDec(asset);
   const sells = orderBook.filter(o => o.type === "sell").slice(0, 9);
   const buys  = orderBook.filter(o => o.type === "buy").slice(0, 9);
   const maxAmt = Math.max(...orderBook.map(o => o.amount), 0.0001);
+
+  const fetchTrades = async () => {
+    try {
+      const res = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: "gtpayout_stats", uid }),
+      });
+      const data = await res.json();
+      if (data.success) setRecentTrades(data.trades || []);
+    } catch { /* silent */ }
+  };
 
   const handleTrade = async (direction: "up" | "down") => {
     const amt = parseFloat(amount);
@@ -177,7 +195,8 @@ const ManualTrading = () => {
         body: JSON.stringify({
           q: "execute_trade", uid,
           symbol: asset, amount: amt,
-          direction, duration: "1m",
+          direction, duration: "manual",
+          entry_price: ticker.last,
         }),
       });
       const data = await res.json();
@@ -185,10 +204,41 @@ const ManualTrading = () => {
         toast.success(`Order placed — ${direction === "up" ? "BUY" : "SELL"} ${amt} USDT`);
         setBalance(prev => prev - amt);
         setAmount("");
+        fetchTrades();
       } else {
         toast.error(data.message || "Order failed");
       }
     } catch { toast.error("Connection error"); }
+  };
+
+  const handleCloseTrade = async (tid: string) => {
+    setIsClosing(tid);
+    try {
+      const res = await fetch("https://bluevult.com/api/index.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          q: "close_trade", uid, tid,
+          exit_price: ticker.last,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Trade closed. PnL: ${data.pnl.toFixed(2)} USDT`);
+        fetchTrades();
+        // Update balance
+        const resBal = await fetch("https://bluevult.com/api/index.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q: "gtpayout_wallet", uid }),
+        });
+        const dataBal = await resBal.json();
+        if (dataBal.success) setBalance(parseFloat(dataBal.trading_wallet.balance));
+      } else {
+        toast.error(data.message || "Close failed");
+      }
+    } catch { toast.error("Connection error"); }
+    finally { setIsClosing(null); }
   };
 
   const total = (parseFloat(price) || 0) * (parseFloat(amount) || 0);
@@ -217,7 +267,7 @@ const ManualTrading = () => {
 
         /* ── Body grid ── */
         /* Desktop: orderbook | chart+trades | form */
-        .bybit-body { display:grid; grid-template-columns:200px 1fr 280px; flex:1; min-height:0; overflow:hidden; }
+        .bybit-body { display:grid; grid-template-columns:200px 1fr 280px; flex:1; min-height:0; overflow:hidden; border-top:1px solid #1e293b; }
 
         /* ── Order book ── */
         .bybit-orderbook { display:flex; flex-direction:column; border-right:1px solid #1e293b; overflow:hidden; }
@@ -416,7 +466,11 @@ const ManualTrading = () => {
           {/* ── Chart + Trades ── */}
           <div className="bybit-center">
             <div className="bybit-chart-wrap">
-              <TradingChart symbol={asset} />
+              <TradingChart
+                symbol={asset}
+                positions={recentTrades}
+                currentPrice={ticker.last}
+              />
             </div>
 
             <div className="bybit-trades-panel">
@@ -446,35 +500,59 @@ const ManualTrading = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentTrades.length === 0 ? (
+                    {(activeTab === "positions" ? recentTrades.filter(t => t.status === 'open') : recentTrades.filter(t => t.status !== 'open')).length === 0 ? (
                       <tr>
                         <td colSpan={5} style={{ textAlign: "center", padding: "24px 0", color: "#848e9c" }}>
                           No records found
                         </td>
                       </tr>
-                    ) : recentTrades.map((t, i) => (
-                      <tr key={i}>
-                        <td>{new Date(t.start_time).toLocaleTimeString()}</td>
-                        <td style={{ fontWeight: 600 }}>{t.asset_symbol}</td>
-                        <td className={t.direction === "up" ? "bybit-col-green" : "bybit-col-red"} style={{ fontWeight: 700 }}>
-                          {t.direction === "up" ? "BUY" : "SELL"}
-                        </td>
-                        <td>${parseFloat(t.amount).toLocaleString()}</td>
-                        <td>
-                          <span style={{
-                            display: "inline-block",
-                            padding: "2px 8px",
-                            borderRadius: 3,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            background: t.status === "won" ? "rgba(38,161,123,.15)" : "rgba(240,185,11,.1)",
-                            color: t.status === "won" ? "#26a17b" : "#f0b90b",
-                          }}>
-                            {t.status.toUpperCase()}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    ) : (activeTab === "positions" ? recentTrades.filter(t => t.status === 'open') : recentTrades.filter(t => t.status !== 'open')).map((t, i) => {
+                      const entryPrice = parseFloat(t.entry_price);
+                      const currentPrice = ticker.last;
+                      const amount = parseFloat(t.amount);
+                      const pctDiff = (currentPrice - entryPrice) / entryPrice;
+                      const pnl = t.direction === 'up' ? pctDiff * amount : -pctDiff * amount;
+                      const pnlColor = pnl >= 0 ? "bybit-col-green" : "bybit-col-red";
+
+                      return (
+                        <tr key={i}>
+                          <td>{new Date(t.start_time).toLocaleTimeString()}</td>
+                          <td style={{ fontWeight: 600 }}>{t.asset_symbol}</td>
+                          <td className={t.direction === "up" ? "bybit-col-green" : "bybit-col-red"} style={{ fontWeight: 700 }}>
+                            {t.direction === "up" ? "BUY" : "SELL"}
+                          </td>
+                          <td>${amount.toLocaleString()}</td>
+                          <td>
+                            {activeTab === "positions" ? (
+                              <div className="flex items-center gap-3">
+                                <span className={pnlColor} style={{ fontWeight: 700 }}>
+                                  {pnl >= 0 ? "+" : ""}{pnl.toFixed(2)}
+                                </span>
+                                <button
+                                  onClick={() => handleCloseTrade(t.trade_id)}
+                                  disabled={isClosing === t.trade_id}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase transition-colors"
+                                >
+                                  {isClosing === t.trade_id ? "..." : "Close"}
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{
+                                display: "inline-block",
+                                padding: "2px 8px",
+                                borderRadius: 3,
+                                fontSize: 10,
+                                fontWeight: 700,
+                                background: t.status === "won" ? "rgba(38,161,123,.15)" : "rgba(240,185,11,.1)",
+                                color: t.status === "won" ? "#26a17b" : "#f0b90b",
+                              }}>
+                                {t.status.toUpperCase()}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -162,7 +162,7 @@ const AppContentInner = () => {
         <Route path="/admin/gtpayout" element={<GTpayoutAdmin />} />
 
         {/* GTpayout Routes */}
-        <Route path="/dashboard/gtpayout" element={<GTpayoutOverview />} />
+        <Route path="/dashboard/gtpayout" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard/gtpayout/trading" element={<ManualTrading />} />
         <Route path="/dashboard/gtpayout/bot" element={<TradingBot />} />
         <Route path="/dashboard/gtpayout/history" element={<TradeHistory />} />

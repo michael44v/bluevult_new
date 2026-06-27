@@ -17,7 +17,7 @@ const GTpayoutLayout: React.FC<{ title: string; children: React.ReactNode }> = (
 
       <div className="flex-1 flex flex-col lg:ml-64 pb-24 lg:pb-0">
         <TopBar title={title} onSidebarToggle={() => setSidebarOpen(true)} />
-        <div className="p-6 space-y-6 mt-16 flex-1">
+        <div className="flex-1 flex flex-col min-h-0">
           {children}
         </div>
       </div>
