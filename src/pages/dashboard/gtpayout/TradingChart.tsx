@@ -1,88 +1,70 @@
 import React, { useEffect, useRef } from 'react';
-import { createChart, IChartApi, CandlestickSeries } from 'lightweight-charts';
 
 interface ChartProps {
   symbol: string;
+  theme?: 'light' | 'dark';
 }
 
-const TradingChart: React.FC<ChartProps> = ({ symbol }) => {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
+declare global {
+  interface Window {
+    TradingView: any;
+  }
+}
+
+const TradingChart: React.FC<ChartProps> = ({ symbol, theme = 'dark' }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      if (containerRef.current && window.TradingView) {
+        // Map symbol to TradingView format if necessary
+        let tvSymbol = symbol;
+        if (symbol === 'BTC/USD') tvSymbol = 'BINANCE:BTCUSDT';
+        else if (symbol === 'ETH/USD') tvSymbol = 'BINANCE:ETHUSDT';
+        else if (symbol === 'SOL/USD') tvSymbol = 'BINANCE:SOLUSDT';
+        else if (symbol === 'BNB/USD') tvSymbol = 'BINANCE:BNBUSDT';
+        else if (symbol === 'XAU/USD') tvSymbol = 'OANDA:XAUUSD';
+        else if (symbol === 'EUR/USD') tvSymbol = 'FX:EURUSD';
+        else if (symbol === 'GBP/USD') tvSymbol = 'FX:GBPUSD';
+        else if (symbol === 'USD/JPY') tvSymbol = 'FX:USDJPY';
+        else tvSymbol = symbol.replace('/', '');
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { color: 'transparent' },
-        textColor: '#64748b',
-      },
-      grid: {
-        vertLines: { color: '#1e293b' },
-        horzLines: { color: '#1e293b' },
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: 400,
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: false,
-      },
-    });
-
-   const candleSeries = chart.addSeries(CandlestickSeries, {
-  upColor: '#10b981',
-  downColor: '#ef4444',
-  borderVisible: false,
-  wickUpColor: '#10b981',
-  wickDownColor: '#ef4444',
-});
-
-    // Mock data for initial chart
-    const data = [];
-    let time = Math.floor(Date.now() / 1000) - 3600 * 24 * 7;
-    let lastClose = 50000;
-    for (let i = 0; i < 500; i++) {
-      const open = lastClose;
-      const high = open + Math.random() * 100;
-      const low = open - Math.random() * 100;
-      const close = low + Math.random() * (high - low);
-      data.push({ time, open, high, low, close });
-      time += 60;
-      lastClose = close;
-    }
-    candleSeries.setData(data as any);
-
-    chartRef.current = chart;
-
-    const handleResize = () => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+        new window.TradingView.widget({
+          autosize: true,
+          symbol: tvSymbol,
+          interval: '1',
+          timezone: 'Etc/UTC',
+          theme: theme,
+          style: '1',
+          locale: 'en',
+          toolbar_bg: '#f1f3f6',
+          enable_publishing: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: false,
+          container_id: containerRef.current.id,
+          backgroundColor: 'rgba(0, 0, 0, 0)',
+          gridColor: 'rgba(30, 41, 59, 0.5)',
+        });
       }
     };
-
-    window.addEventListener('resize', handleResize);
-
-    // Simulated real-time updates
-    const interval = setInterval(() => {
-      const lastData = data[data.length - 1];
-      const open = lastData.close;
-      const high = open + Math.random() * 50;
-      const low = open - Math.random() * 50;
-      const close = low + Math.random() * (high - low);
-      const newTime = lastData.time + 60;
-      const newData = { time: newTime, open, high, low, close };
-      candleSeries.update(newData as any);
-      data.push(newData);
-    }, 5000);
+    document.head.appendChild(script);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      chart.remove();
-      clearInterval(interval);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
-  }, [symbol]);
+  }, [symbol, theme]);
 
-  return <div ref={chartContainerRef} className="w-full h-full" />;
+  return (
+    <div className="w-full h-full min-h-[400px] bg-slate-900/50 rounded-xl overflow-hidden border border-slate-800">
+      <div id={`tradingview_${symbol.replace('/', '_')}`} ref={containerRef} className="w-full h-full" />
+    </div>
+  );
 };
 
 export default TradingChart;

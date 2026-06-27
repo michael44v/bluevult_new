@@ -127,6 +127,27 @@ const Overview = () => {
 
         {/* Top Section: Balance & Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Main Wallet Balance Card */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Main Wallet Balance</p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl font-extrabold text-white">
+                  ${parseFloat(data?.main_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </h2>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/wallets/deposit">
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 font-bold">Deposit</Button>
+              </Link>
+              <Link to="/withdrawal">
+                <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-6 font-bold">Withdraw</Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Trading Wallet Balance Card */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
             <div>
               <p className="text-slate-400 text-sm mb-1">Trading Wallet Balance</p>
@@ -139,31 +160,22 @@ const Overview = () => {
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Link to="/wallets/deposit">
-                  <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-4">Deposit</Button>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/dashboard/gtpayout/trading">
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 font-bold">Trade Now</Button>
               </Link>
-              <Link to="/withdrawal">
-                  <Button size="sm" className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-4">Withdraw</Button>
+              <Link to="/dashboard/gtpayout/bot">
+                <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 rounded-xl px-4 font-bold">Bot</Button>
               </Link>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl">
-            <div>
-              <p className="text-slate-400 text-sm mb-1">Main Wallet Balance</p>
-              <div className="flex items-center gap-3">
-                <h2 className="text-3xl font-extrabold text-white">
-                  ${parseFloat(data?.main_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </h2>
-              </div>
-            </div>
-            <div className="flex gap-2">
               <Button
-                onClick={() => setShowTransferModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 flex items-center gap-2"
+                size="sm"
+                onClick={() => {
+                  setTransferDirection("trading_to_main");
+                  setShowTransferModal(true);
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-white rounded-xl px-4 font-bold"
               >
-                <FaExchangeAlt size={12} /> Quick Transfer
+                Transfer
               </Button>
             </div>
           </div>
@@ -173,13 +185,13 @@ const Overview = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatBox
             label="Today's Profit"
-            value={`$${parseFloat(data?.wallet?.today_profit || 0).toLocaleString()}`}
+            value={`$${parseFloat(data?.wallet?.today_profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             trend="+8.91% (24h)"
             trendColor="text-emerald-500"
           />
           <StatBox
             label="Total Profit"
-            value={`$${parseFloat(data?.wallet?.total_profit || 0).toLocaleString()}`}
+            value={`$${parseFloat(data?.wallet?.total_profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             trend="+35.62%"
             trendColor="text-emerald-500"
           />
@@ -330,9 +342,18 @@ const Overview = () => {
                       <span className="text-slate-500 text-xs">USDT (TRC20)</span>
                       <FaArrowDown className="text-slate-600 text-[10px]" />
                    </div>
-                   <p className="text-2xl font-extrabold text-white">$5,842.21</p>
+                   <p className="text-2xl font-extrabold text-white">
+                     ${parseFloat(data?.wallet?.total_profit || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                   </p>
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 rounded-2xl shadow-lg shadow-blue-600/20 flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    setTransferDirection("trading_to_main");
+                    setTransferAmount(data?.wallet?.total_profit || "0");
+                    setShowTransferModal(true);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 rounded-2xl shadow-lg shadow-blue-600/20 flex items-center gap-2"
+                >
                    <FaExchangeAlt /> Withdraw Now
                 </Button>
              </div>

@@ -798,45 +798,70 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         }
         break;
 
-    case 'open_position':
+    case 'execute_trade':
         $uid = intval($input['uid'] ?? 0);
-        $asset = sanitizeInput($input['asset'] ?? '');
-        $side = sanitizeInput($input['side'] ?? 'long');
-        $leverage = intval($input['leverage'] ?? 1);
-        $margin = floatval($input['margin'] ?? 0);
-        $entry_price = floatval($input['entry_price'] ?? 0);
-        $size = ($margin * $leverage);
+        $asset = sanitizeInput($input['symbol'] ?? '');
+        $direction = sanitizeInput($input['direction'] ?? '');
+        $amount = floatval($input['amount'] ?? 0);
+        $duration = sanitizeInput($input['duration'] ?? '1m');
+        $is_bot = intval($input['is_bot'] ?? 0);
 
-        if ($uid <= 0 || !$asset || $margin <= 0 || $entry_price <= 0) {
+        if ($uid <= 0 || !$asset || $amount <= 0 || !$direction) {
             echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
             exit();
         }
 
-        $stmt = $conn->prepare("SELECT user_balance FROM user_balances WHERE user_id = ?");
-        $stmt->bind_param("i", $uid);
-        $stmt->execute();
-        $res = $stmt->get_result()->fetch_assoc();
-
-        if (!$res || $res['user_balance'] < $margin) {
-            echo json_encode(['success' => false, 'message' => 'Insufficient balance for margin']);
+        // Check Trading Balance
+        $res = mysqli_query($conn, "SELECT balance FROM trading_wallets WHERE user_id = '$uid'");
+        $wallet = mysqli_fetch_assoc($res);
+        if (!$wallet || $wallet['balance'] < $amount) {
+            echo json_encode(['success' => false, 'message' => 'Insufficient Trading Wallet balance']);
             exit();
         }
 
-        $conn->begin_transaction();
+        // Simulate Entry Price (Mock)
+        $entry_price = 65000 + (rand(-1000, 1000) / 10);
+
+        // Immediate Execution Simulation
+        $pnl_rate = 0.85; // 85% payout
+        $outcome = (rand(1, 100) <= 65) ? 'won' : 'lost'; // 65% win rate for simulated trades
+        $pnl = ($outcome === 'won') ? ($amount * $pnl_rate) : -$amount;
+
+        mysqli_begin_transaction($conn);
         try {
-            $stmt = $conn->prepare("UPDATE user_balances SET user_balance = user_balance - ? WHERE user_id = ?");
-            $stmt->bind_param("di", $margin, $uid);
+            // Update Balance
+            mysqli_query($conn, "UPDATE trading_wallets SET balance = balance + $pnl WHERE user_id = '$uid'");
+
+            // Log Trade
+            $stmt = $conn->prepare("INSERT INTO trades (user_id, asset_symbol, direction, amount, entry_price, status, pnl, is_bot, duration, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt->bind_param("issddsdss", $uid, $asset, $direction, $amount, $entry_price, $outcome, $pnl, $is_bot, $duration);
             $stmt->execute();
 
-            $stmt = $conn->prepare("INSERT INTO user_positions (user_id, asset_symbol, side, leverage, margin, size, entry_price, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'open')");
-            $stmt->bind_param("issiddd", $uid, $asset, $side, $leverage, $margin, $size, $entry_price);
-            $stmt->execute();
-
-            $conn->commit();
-            echo json_encode(['success' => true, 'message' => 'Position opened successfully']);
+            mysqli_commit($conn);
+            echo json_encode(['success' => true, 'message' => 'Trade executed', 'outcome' => $outcome, 'pnl' => $pnl]);
         } catch (Exception $e) {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Failed to open position: ' . $e->getMessage()]);
+            mysqli_rollback($conn);
+            echo json_encode(['success' => false, 'message' => 'Execution failed: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'bot_action':
+        $uid = intval($input['uid'] ?? 0);
+        $action = sanitizeInput($input['action'] ?? '');
+        $mode = sanitizeInput($input['mode'] ?? 'balanced');
+
+        if ($uid <= 0 || !$action) {
+            echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+            exit();
+        }
+
+        if ($action === 'start') {
+            mysqli_query($conn, "DELETE FROM bot_sessions WHERE user_id = '$uid'"); // Clear old sessions
+            mysqli_query($conn, "INSERT INTO bot_sessions (user_id, mode, status) VALUES ('$uid', '$mode', 'running')");
+            echo json_encode(['success' => true, 'message' => 'Bot started']);
+        } else {
+            mysqli_query($conn, "UPDATE bot_sessions SET status = 'stopped', end_time = NOW() WHERE user_id = '$uid'");
+            echo json_encode(['success' => true, 'message' => 'Bot stopped']);
         }
         break;
 
@@ -937,30 +962,34 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         $bot_active = mysqli_num_rows($bot_res) > 0;
 
         // Get Recent Trades
-        $trades_res = mysqli_query($conn, "SELECT * FROM trades WHERE user_id = '$uid' ORDER BY start_time DESC LIMIT 10");
+        $trades_res = mysqli_query($conn, "SELECT * FROM trades WHERE user_id = '$uid' ORDER BY start_time DESC LIMIT 50");
         $trades = [];
         while ($row = mysqli_fetch_assoc($trades_res)) {
             $trades[] = $row;
         }
 
-        // Calculate Win Rate if not in wallet table
+        // Calculate Stats from Trades History (Real-time calculation)
+        $total_pnl_res = mysqli_query($conn, "SELECT SUM(pnl) as total_pnl FROM trades WHERE user_id = '$uid' AND status IN ('won', 'lost')");
+        $total_profit = (float)mysqli_fetch_assoc($total_pnl_res)['total_pnl'] ?? 0;
+
         $total_trades_res = mysqli_query($conn, "SELECT COUNT(*) as count FROM trades WHERE user_id = '$uid' AND status IN ('won', 'lost')");
-        $total_trades = mysqli_fetch_assoc($total_trades_res)['count'];
+        $total_trades = (int)mysqli_fetch_assoc($total_trades_res)['count'];
+
         $won_trades_res = mysqli_query($conn, "SELECT COUNT(*) as count FROM trades WHERE user_id = '$uid' AND status = 'won'");
-        $won_trades = mysqli_fetch_assoc($won_trades_res)['count'];
+        $won_trades = (int)mysqli_fetch_assoc($won_trades_res)['count'];
+
         $win_rate = $total_trades > 0 ? round(($won_trades / $total_trades) * 100, 2) : 0;
 
-        // Get Today's Profit
         $today = date('Y-m-d');
-        $today_profit_res = mysqli_query($conn, "SELECT SUM(pnl) as pnl FROM trades WHERE user_id = '$uid' AND status = 'won' AND DATE(start_time) = '$today'");
-        $today_profit = mysqli_fetch_assoc($today_profit_res)['pnl'] ?? 0;
+        $today_profit_res = mysqli_query($conn, "SELECT SUM(pnl) as pnl FROM trades WHERE user_id = '$uid' AND status IN ('won', 'lost') AND DATE(start_time) = '$today'");
+        $today_profit = (float)mysqli_fetch_assoc($today_profit_res)['pnl'] ?? 0;
 
         echo json_encode([
             'success' => true,
             'wallet' => [
                 'balance' => (float)$wallet['balance'],
-                'today_profit' => (float)$today_profit,
-                'total_profit' => (float)$wallet['total_profit'],
+                'today_profit' => $today_profit,
+                'total_profit' => $total_profit,
                 'win_rate' => $win_rate
             ],
             'main_balance' => (float)$main_balance,
