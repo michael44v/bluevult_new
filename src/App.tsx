@@ -22,6 +22,8 @@ import SignUp from "./pages/auth/SignUp";
 import OtpVerify from "./pages/auth/OtpVerify";
 import GTpayoutOverview from "./pages/dashboard/gtpayout/Overview";
 import GTpayoutAdmin from "./pages/admin/GTpayoutAdmin";
+import GTpayoutTrades from "./pages/admin/GTpayoutTrades";
+import GTpayoutAnalytics from "./pages/admin/GTpayoutAnalytics";
 import TradingWallet from "./pages/dashboard/gtpayout/TradingWallet";
 import ManualTrading from "./pages/dashboard/gtpayout/ManualTrading";
 import TradingBot from "./pages/dashboard/gtpayout/TradingBot";
@@ -100,8 +102,9 @@ const AppContentInner = () => {
   const showWidgets = useMemo(() => {
     const isAuthPage = ["/signin", "/signup", "/otp-verify", "/reset", "/forgot-password"].includes(location.pathname.toLowerCase());
     const isLandingPage = ["/", "/about", "/community", "/cryptocurrencies", "/exchanges", "/products", "/learn"].includes(location.pathname);
+    const isAdminPage = location.pathname.toLowerCase().startsWith("/admin");
     const userId = localStorage.getItem("user_id");
-    return userId && !isAuthPage && !isLandingPage;
+    return userId && !isAuthPage && !isLandingPage && !isAdminPage;
   }, [location.pathname]);
 
   return (
@@ -159,6 +162,8 @@ const AppContentInner = () => {
 
         {/* Admin GTpayout Route */}
         <Route path="/admin/gtpayout" element={<GTpayoutAdmin />} />
+        <Route path="/admin/gtpayout/trades" element={<GTpayoutTrades />} />
+        <Route path="/admin/gtpayout/analytics" element={<GTpayoutAnalytics />} />
 
         {/* GTpayout Routes */}
         <Route path="/dashboard/gtpayout" element={<Navigate to="/dashboard" replace />} />

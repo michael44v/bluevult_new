@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { FaRobot, FaChartLine, FaHistory, FaCogs, FaUsers } from "react-icons/fa";
+import { FaRobot, FaChartLine, FaHistory, FaCogs, FaUsers, FaList, FaChartBar } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import AdminLayout from "./components/AdminLayout";
 
 const GTpayoutAdmin = () => {
   const [stats, setStats] = useState<any>(null);
@@ -9,7 +12,7 @@ const GTpayoutAdmin = () => {
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
-        const response = await fetch("https://bluevult.com/api/admin-api.php", {
+        const response = await fetch("/api/admin-api.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ q: "admin_gtpayout_overview" }),
@@ -31,14 +34,27 @@ const GTpayoutAdmin = () => {
   if (loading) return <div className="p-10 text-white">Loading GTpayout Admin...</div>;
 
   return (
-    <div className="p-6 space-y-6 bg-[#020617] min-h-screen text-white">
+    <AdminLayout title="GTpayout Management">
+    <div className="p-0 space-y-6 bg-[#020617] text-white">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <FaRobot className="text-emerald-500" /> GTpayout Management
         </h1>
-        <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold transition">
-          Global Bot Settings
-        </button>
+        <div className="flex gap-2">
+            <Link to="/admin/gtpayout/trades">
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 font-bold">
+                <FaList /> Bot Trades
+              </Button>
+            </Link>
+            <Link to="/admin/gtpayout/analytics">
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 font-bold">
+                <FaChartBar /> Bot Analytics
+              </Button>
+            </Link>
+            <button className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition">
+            Global Bot Settings
+            </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -100,6 +116,7 @@ const GTpayoutAdmin = () => {
         </div>
       </div>
     </div>
+    </AdminLayout>
   );
 };
 

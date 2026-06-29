@@ -70,7 +70,8 @@ if ($result && $result->num_rows > 0) {
             $checkStmt->execute();
             if ($checkStmt->get_result()->num_rows > 0) continue;
 
-            $tradeAmount = ($settings['risk_percentage'] / 100) * $walletBalance;
+            // Force 5% risk per trade as per requirement
+            $tradeAmount = (5 / 100) * $walletBalance;
             if ($tradeAmount < 1) $tradeAmount = 1;
 
             if ($risk->canTrade($userId, $tradeAmount, $settings, $walletBalance)) {
@@ -87,17 +88,49 @@ $openTrades = $stmt->get_result();
 
 while ($trade = $openTrades->fetch_assoc()) {
     $startTime = strtotime($trade['start_time']);
-    $duration = 1; // 1 minute
+    $duration = (int)$trade['duration'];
+    $asset = $trade['asset_symbol'];
 
-    if (time() >= ($startTime + ($duration * 60))) {
-        $asset = $trade['asset_symbol'];
-        $currentCandle = $binance->getLatestCandle($asset);
-        if (!$currentCandle) continue;
+    $currentCandle = $binance->getLatestCandle($asset);
+    if (!$currentCandle) continue;
+    $currentPrice = $currentCandle['close'];
 
-        $exitPrice = $currentCandle['close'];
+    $shouldClose = false;
+    $closeReason = "";
+
+    // 1. Check SL/TP
+    $slPrice = $trade['sl_price'] ? (float)$trade['sl_price'] : null;
+    $tpPrice = $trade['tp_price'] ? (float)$trade['tp_price'] : null;
+    $direction = $trade['direction'];
+
+    if ($direction === 'up') {
+        if ($slPrice && $currentPrice <= $slPrice) {
+            $shouldClose = true;
+            $closeReason = "Stop Loss Hit";
+        } else if ($tpPrice && $currentPrice >= $tpPrice) {
+            $shouldClose = true;
+            $closeReason = "Take Profit Hit";
+        }
+    } else {
+        if ($slPrice && $currentPrice >= $slPrice) {
+            $shouldClose = true;
+            $closeReason = "Stop Loss Hit";
+        } else if ($tpPrice && $currentPrice <= $tpPrice) {
+            $shouldClose = true;
+            $closeReason = "Take Profit Hit";
+        }
+    }
+
+    // 2. Check Duration
+    if (!$shouldClose && time() >= ($startTime + ($duration * 60))) {
+        $shouldClose = true;
+        $closeReason = "Duration Expired";
+    }
+
+    if ($shouldClose) {
+        $exitPrice = $currentPrice;
         $entryPrice = (float)$trade['entry_price'];
         $amount = (float)$trade['amount'];
-        $direction = $trade['direction'];
 
         $pctDiff = ($exitPrice - $entryPrice) / $entryPrice;
         if ($direction === 'up') {

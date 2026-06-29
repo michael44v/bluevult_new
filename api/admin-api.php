@@ -799,6 +799,49 @@ echo json_encode([
         echo json_encode(['success' => true, 'data' => $settings]);
         break;
 
+    case 'admin_get_all_trades':
+        $sql = "
+            SELECT t.*, u.user_name, u.user_email
+            FROM trades t
+            LEFT JOIN user_details u ON t.user_id = u.user_id
+            ORDER BY t.start_time DESC
+        ";
+        $res = $db->query($sql);
+        echo json_encode([
+            'success' => true,
+            'data' => $res->fetch_all(MYSQLI_ASSOC)
+        ]);
+        break;
+
+    case 'admin_get_bot_analytics':
+        // Total stats for bot
+        $total_bot_trades = $db->query("SELECT COUNT(*) as count FROM trades WHERE is_bot = 1")->fetch_assoc()['count'];
+        $won_bot_trades = $db->query("SELECT COUNT(*) as count FROM trades WHERE is_bot = 1 AND status = 'won'")->fetch_assoc()['count'];
+        $total_bot_pnl = $db->query("SELECT SUM(pnl) as sum FROM trades WHERE is_bot = 1")->fetch_assoc()['sum'];
+        $active_bot_sessions = $db->query("SELECT COUNT(*) as count FROM bot_sessions WHERE status = 'running'")->fetch_assoc()['count'];
+
+        // Profit per day for last 7 days
+        $pnl_history = $db->query("
+            SELECT DATE(start_time) as date, SUM(pnl) as pnl
+            FROM trades
+            WHERE is_bot = 1
+            GROUP BY DATE(start_time)
+            ORDER BY DATE(start_time) DESC
+            LIMIT 7
+        ")->fetch_all(MYSQLI_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'stats' => [
+                'total_trades' => (int)$total_bot_trades,
+                'won_trades' => (int)$won_bot_trades,
+                'total_pnl' => (float)$total_bot_pnl,
+                'active_sessions' => (int)$active_bot_sessions
+            ],
+            'pnl_history' => $pnl_history
+        ]);
+        break;
+
     case 'admin_gtpayout_overview':
         $total_trades = $db->query("SELECT COUNT(*) as count FROM trades")->fetch_assoc()['count'];
         $active_bots = $db->query("SELECT COUNT(*) as count FROM bot_sessions WHERE status = 'running'")->fetch_assoc()['count'];
