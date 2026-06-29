@@ -47,8 +47,21 @@ class OrderExecutor {
 
             $isBot = 1;
             $status = 'open';
-            $stmt = $this->conn->prepare("INSERT INTO trades (user_id, asset_symbol, direction, amount, entry_price, status, is_bot, duration, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-            $stmt->bind_param("issddsds", $userId, $asset, $direction, $amount, $price, $status, $isBot, $duration);
+
+            // Calculate SL and TP prices (e.g., 2% SL, 5% TP as per default or settings)
+            $sl_pct = (float)($settings['stop_loss'] ?? 2.0) / 100;
+            $tp_pct = (float)($settings['take_profit'] ?? 5.0) / 100;
+
+            if ($direction === 'up') {
+                $sl_price = $price * (1 - $sl_pct);
+                $tp_price = $price * (1 + $tp_pct);
+            } else {
+                $sl_price = $price * (1 + $sl_pct);
+                $tp_price = $price * (1 - $tp_pct);
+            }
+
+            $stmt = $this->conn->prepare("INSERT INTO trades (user_id, asset_symbol, direction, amount, entry_price, status, is_bot, duration, sl_price, tp_price, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+            $stmt->bind_param("issddsdSdd", $userId, $asset, $direction, $amount, $price, $status, $isBot, $duration, $sl_price, $tp_price);
             $stmt->execute();
             $tradeId = $this->conn->insert_id;
 

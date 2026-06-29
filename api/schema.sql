@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS `trades` (
   `duration` varchar(10) NOT NULL, -- e.g. '1m', '5m'
   `status` enum('open','won','lost','expired') DEFAULT 'open',
   `pnl` decimal(20,8) DEFAULT '0.00000000',
+  `sl_price` decimal(20,8) DEFAULT NULL,
+  `tp_price` decimal(20,8) DEFAULT NULL,
   `is_bot` tinyint(1) DEFAULT 0,
   `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `end_time` timestamp NULL DEFAULT NULL,
