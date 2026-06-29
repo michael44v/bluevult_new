@@ -33,10 +33,6 @@ import {
 
 import {
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
 } from "recharts";
 
 // ------------------------
@@ -182,12 +178,6 @@ const Dashboard: React.FC = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [userModalData, setUserModalData] = useState({ title: "", content: "" });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [portfolioData, setPortfolioData] = useState([
-    { name: "BTC", value: 55 },
-    { name: "ETH", value: 25 },
-    { name: "SOL", value: 10 },
-    { name: "ADA", value: 10 },
-  ]);
 
   const flashTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const sparklineBuffers = useRef<Record<string, number[]>>({});
@@ -285,18 +275,6 @@ const Dashboard: React.FC = () => {
     fetchCryptoData();
   }, []);
 
-  // ------------------------
-  // Portfolio allocation weights by live market cap proxy
-  // ------------------------
-  useEffect(() => {
-    if (cryptoData.length === 0) return;
-    const tracked = cryptoData.filter(c => portfolioWeights[c.symbol]);
-    const weightedPrices = tracked.map(c => ({
-      name: c.symbol.toUpperCase(),
-      value: Math.round((portfolioWeights[c.symbol] ?? 0) * 100),
-    }));
-    if (weightedPrices.length > 0) setPortfolioData(weightedPrices);
-  }, [cryptoData.map(c => c.rawPrice).join(",")]);
 
   // ------------------------
   // Fetch dashboard stats + transactions
@@ -640,43 +618,6 @@ const Dashboard: React.FC = () => {
 
               {/* Portfolio allocation */}
               <div className="space-y-8">
-                <div className="hidden lg:block">
-                  <ChartCard title="Portfolio Allocation">
-                    <div className="flex flex-col items-center space-y-4">
-                      <ResponsiveContainer width="100%" height={160}>
-                        <PieChart>
-                          <Pie
-                            data={portfolioData}
-                            dataKey="value"
-                            nameKey="name"
-                            outerRadius={70}
-                            innerRadius={40}
-                            animationBegin={0}
-                            animationDuration={300}
-                          >
-                            {portfolioData.map((_, index) => (
-                              <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            contentStyle={{ background: "#0f111b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8 }}
-                            labelStyle={{ color: "#fff" }}
-                            formatter={(value: any) => [`${value}%`, ""]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="w-full space-y-2">
-                        {portfolioData.map((asset, idx) => (
-                          <div key={idx} className="flex items-center gap-3">
-                            <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                            <p className="text-sm font-medium text-gray-300">{asset.name} ({asset.value}%)</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </ChartCard>
-                </div>
-
                 {/* Live price ticker mini panel */}
                 <div className="hidden lg:block">
                   <ChartCard title="🔴 Live Prices">

@@ -19,10 +19,6 @@ const SignIn = () => {
   const require2FA = settings.find(s => s.setting_key === "require_2fa")?.setting_value === "true";
   const force2FA = settings.find(s => s.setting_key === "force_2fa")?.setting_value === "true";
 
-  const [showSecurityQuestion, setShowSecurityQuestion] = useState(false);
-  const [securityQuestion, setSecurityQuestion] = useState("");
-  const [securityAnswer, setSecurityAnswer] = useState("");
-
   const [showOTP, setShowOTP] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [isSendingOTP, setIsSendingOTP] = useState(false);
@@ -71,7 +67,6 @@ const SignIn = () => {
           q: "signin",
           email: form.email,
           password: form.password,
-          security_answer: securityAnswer,
         }),
       });
 
@@ -89,18 +84,6 @@ const SignIn = () => {
         return;
       }
 
-      // ✅ LOGIN SUCCESS
-      if (require2FA && !showSecurityQuestion) {
-        if (data.security_question) {
-          setSecurityQuestion(data.security_question);
-          setShowSecurityQuestion(true);
-          setCaptchaStatus(false); // Reset captcha for security answer step
-          return;
-        } else {
-            setError("Two-Factor Authentication (Security Question) is mandatory. Please contact support to set up your security question.");
-            return;
-        }
-      }
 
       if (force2FA) {
         navigate("/otp-verify", { state: { userId: data.user_id } });
@@ -163,9 +146,7 @@ const SignIn = () => {
           <p className="text-slate-400 mb-8">
             {showOTP
               ? "Enter the 6-digit code sent to your email"
-              : showSecurityQuestion
-                ? "Answer your security question to continue"
-                : "Enter your credentials to continue"}
+              : "Enter your credentials to continue"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -193,7 +174,7 @@ const SignIn = () => {
                   Back to login
                 </button>
               </div>
-            ) : !showSecurityQuestion ? (
+            ) : (
               <>
                 {/* EMAIL */}
                 <div>
@@ -231,29 +212,6 @@ const SignIn = () => {
                   />
                 </div>
               </>
-            ) : (
-              <div>
-                <label className="block text-sm text-slate-300 mb-2 font-bold">
-                  {securityQuestion}
-                </label>
-                <input
-                  type="text"
-                  value={securityAnswer}
-                  onChange={(e) => setSecurityAnswer(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700
-                             text-white placeholder-slate-500 focus:outline-none
-                             focus:ring-2 focus:ring-emerald-500/40"
-                  placeholder="Your answer"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSecurityQuestion(false)}
-                  className="text-xs text-emerald-400 mt-2 hover:underline"
-                >
-                  Back to login
-                </button>
-              </div>
             )}
 
             <div className="flex items-center justify-between text-sm">

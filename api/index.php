@@ -13,12 +13,9 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 
 
 // ===== DATABASE CONNECTION =====
-$host = "localhost";       // Usually localhost
-$user = "ktkdvcdj_root";            // Default user
-$password = "victor47009A"; // Your Laragon password
-$database = "ktkdvcdj_bluevult"; 
+require_once __DIR__ . '/config.php';
 
-$conn = mysqli_connect($host, $user, $password, $database);
+$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 if (!$conn) {
     echo json_encode(['success' => false, 'message' => 'Database connection failed']);
@@ -183,15 +180,6 @@ $stmt->close();
 
                 while($read=$result->fetch_assoc()) {
                     $user_id = $read['user_id'];
-                    $sec_q = $read['security_question'];
-                    $sec_a = $read['security_answer'];
-
-                    if (isset($input['security_answer'])) {
-                        if (strtolower(trim($input['security_answer'])) !== strtolower(trim($sec_a))) {
-                            echo json_encode(['success' => false, 'message' => 'Incorrect security answer']);
-                            exit();
-                        }
-                    }
 
                     // Notification for login
                     $notif_title = "New Login Detected";
@@ -219,7 +207,7 @@ $stmt->close();
                         exit();
                     }
 
-                    echo json_encode(['success' => true, 'message' => 'success ','user_id' => $user_id, 'security_question' => $sec_q]);
+                    echo json_encode(['success' => true, 'message' => 'success ','user_id' => $user_id]);
                     exit();
                 }
                
@@ -253,7 +241,7 @@ $stmt->close();
         case "sidebar":
                  $get_user = sanitizeInput($input['uid'] ?? '');
                   $check = "
-                    SELECT u.user_name, u.user_email, u.user_picture, u.user_status, u.modal_title, u.modal_content, u.modal_active, u.security_question, COALESCE(b.user_balance, 0) as balance
+                    SELECT u.user_name, u.user_email, u.user_picture, u.user_status, u.modal_title, u.modal_content, u.modal_active, COALESCE(b.user_balance, 0) as balance
                     FROM user_details u
                     LEFT JOIN user_balances b ON u.user_id = b.user_id
                     WHERE u.user_id='$get_user'
@@ -277,7 +265,6 @@ $stmt->close();
                             'modal_title' => $read['modal_title'],
                             'modal_content' => $read['modal_content'],
                             'modal_active' => (int)$read['modal_active'],
-                            'has_security_question' => !empty($read['security_question']),
                             'balance' => (float)$read['balance'],
                         ]);
 
@@ -717,8 +704,6 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
         $profile_pic = $input['profile_pic'] ?? null;
         $current_password = $input['current_password'] ?? null;
         $new_password = $input['new_password'] ?? null;
-        $security_question = $input['security_question'] ?? null;
-        $security_answer = $input['security_answer'] ?? null;
 
         if (!$user_id) {
             echo json_encode(['success' => false, 'message' => 'User ID missing']);
@@ -770,14 +755,6 @@ $stmt->bind_param("issss", $uid, $uname, $img_one, $img_two, $img_three);
             $updates[] = "user_name = ?";
             $types .= "s";
             $params[] = $name;
-        }
-
-        if (!empty($security_question) && !empty($security_answer)) {
-            $updates[] = "security_question = ?";
-            $updates[] = "security_answer = ?";
-            $types .= "ss";
-            $params[] = $security_question;
-            $params[] = $security_answer;
         }
 
         if (!empty($updates)) {

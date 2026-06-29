@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaBars, FaBell, FaUserCircle, FaSun, FaMoon } from "react-icons/fa";
+import { FaBars, FaBell, FaUserCircle, FaSun, FaMoon, FaGlobe } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 interface TopBarProps {
@@ -70,9 +70,14 @@ const TopBar: React.FC<TopBarProps> = ({ title, onSidebarToggle }) => {
     <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-white dark:bg-[#020617]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between z-50 transition-colors duration-300">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-xl font-black bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent tracking-tighter">
-            GTpayout
-          </span>
+          <div className="flex items-center gap-1.5">
+            <div className="bg-green-600 p-1 rounded flex items-center justify-center">
+              <span className="text-[10px] font-black text-white leading-none">GT</span>
+            </div>
+            <span className="text-xl font-black text-green-600 tracking-tighter">
+              GTpayout
+            </span>
+          </div>
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-2 hidden md:block" />
         </div>
         <button
