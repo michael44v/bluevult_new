@@ -49,14 +49,6 @@ const Overview = () => {
     { date: "May 17", value: 128540 },
   ];
 
-  const assetAllocation = [
-    { name: "BTC", value: 45.2, color: "#F7931A" },
-    { name: "ETH", value: 28.7, color: "#627EEA" },
-    { name: "SOL", value: 12.4, color: "#14F195" },
-    { name: "USDT", value: 9.6, color: "#26A17B" },
-    { name: "Others", value: 4.1, color: "#8247E5" },
-  ];
-
   const fetchData = async () => {
     try {
       const response = await fetch("/api/index.php", {
@@ -216,10 +208,10 @@ const Overview = () => {
         </div>
 
         {/* Charts & Allocation */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-1 gap-6">
 
           {/* Performance Overview */}
-          <div className="lg:col-span-2 bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
+          <div className="lg:col-span-1 bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold">Performance Overview</h3>
               <select className="bg-slate-800 border-none text-xs rounded-lg px-2 py-1 outline-none">
@@ -250,45 +242,6 @@ const Overview = () => {
             </div>
           </div>
 
-          {/* Asset Allocation */}
-          <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
-            <h3 className="text-lg font-bold mb-6">Asset Allocation</h3>
-            <div className="h-[200px] flex items-center justify-center relative">
-               <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={assetAllocation}
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {assetAllocation.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                        contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                    />
-                  </PieChart>
-               </ResponsiveContainer>
-               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-[10px] text-slate-500 uppercase">Total</p>
-                  <p className="text-sm font-bold text-white">$128,540</p>
-               </div>
-            </div>
-            <div className="space-y-2 mt-4">
-              {assetAllocation.map((asset) => (
-                <div key={asset.name} className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ background: asset.color }} />
-                    <span className="text-slate-400 font-bold">{asset.name}</span>
-                  </div>
-                  <span className="text-white font-bold">{asset.value}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Bottom Section: Recent Trades & Quick Buttons */}

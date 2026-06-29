@@ -202,7 +202,6 @@ useEffect(() => {
                 <SidebarItem to="/dashboard/gtpayout/history" label="Trade History" Icon={FaCoins} />
                 <SidebarItem to="/dashboard/gtpayout/wallet" label="Trading Wallet" Icon={FaWallet} />
                 <SidebarItem to="/dashboard/gtpayout/performance" label="Performance" Icon={FaChartLine} />
-                <SidebarItem to="/dashboard/gtpayout/leaderboard" label="Leaderboard" Icon={FaUsers} />
                 <SidebarItem to="/dashboard/gtpayout/settings" label="Settings" Icon={FaCogs} />
               </div>
             )}

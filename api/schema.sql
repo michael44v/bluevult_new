@@ -116,6 +116,8 @@ CREATE TABLE IF NOT EXISTS `bot_settings` (
   `max_daily_profit` decimal(20,8) DEFAULT '500.00000000',
   `stop_loss` decimal(5,2) DEFAULT '2.00',
   `take_profit` decimal(5,2) DEFAULT '5.00',
+  `binance_api_key` varchar(255) DEFAULT NULL,
+  `binance_api_secret` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`settings_id`),
   UNIQUE KEY `idx_user_settings` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

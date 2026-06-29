@@ -25,7 +25,6 @@ import GTpayoutAdmin from "./pages/admin/GTpayoutAdmin";
 import TradingWallet from "./pages/dashboard/gtpayout/TradingWallet";
 import ManualTrading from "./pages/dashboard/gtpayout/ManualTrading";
 import TradingBot from "./pages/dashboard/gtpayout/TradingBot";
-import Leaderboard from "./pages/dashboard/gtpayout/Leaderboard";
 import TradeHistory from "./pages/dashboard/gtpayout/TradeHistory";
 import Performance from "./pages/dashboard/gtpayout/Performance";
 import GTSettings from "./pages/dashboard/gtpayout/GTSettings";
@@ -168,7 +167,6 @@ const AppContentInner = () => {
         <Route path="/dashboard/gtpayout/history" element={<TradeHistory />} />
         <Route path="/dashboard/gtpayout/wallet" element={<TradingWallet />} />
         <Route path="/dashboard/gtpayout/performance" element={<Performance />} />
-        <Route path="/dashboard/gtpayout/leaderboard" element={<Leaderboard />} />
         <Route path="/dashboard/gtpayout/settings" element={<GTSettings />} />
 
         <Route path="*" element={<NotFound />} />
